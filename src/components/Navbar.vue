@@ -4,6 +4,8 @@
     <router-link class="logo" to="/">
       <img src="/logo.png" alt="logo" />
     </router-link>
+
+    <button class="avatar"><img src="/avatar.svg" /></button>
   </nav>
 </template>
 
@@ -27,6 +29,24 @@
 .logo img {
   height: 35px;
   width: auto;
+  display: block;
+}
+
+.avatar {
+  margin-left: auto;
+  height: 35px;
+  width: 35px;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.avatar img {
+  height: 100%;
+  width: 100%;
   display: block;
 }
 </style>
