@@ -1,9 +1,8 @@
 #!/bin/bash
 
-set -e
 
-PROJECT_DIR="/front-end"
-DEPLOY_DIR="/httpdocs"
+PROJECT_DIR="./"
+DEPLOY_DIR="./public"
 
 cd "$PROJECT_DIR"
 
