@@ -1,13 +1,17 @@
 #!/bin/bash
 
+PROJECT_DIR="/httpdocs"
+DEPLOY_DIR="/httpdocs/public"
 
-PROJECT_DIR="httpdocs/"
-DEPLOY_DIR="httpdocs/public"
+echo "current directory" > DEPLOY.log
+echo "project dir" >> $PROJECT_DIR/DEPLOY.log
+echo "deploy dir" >> $DEPLOY_DIR/DEPLOY.log
 
 cd "$PROJECT_DIR"
+mkdir "$DEPLOY_DIR"
 
 echo "Installing dependencies..."
-npm ci
+npm i
 
 echo "Building..."
 npm run build
