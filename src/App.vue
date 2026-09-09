@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import LoginView from "./components/LoginView.vue";
 </script>
 
 <template>
-  <LoginView />
+  <h1>Hello World</h1>
 </template>
 
 <style scoped></style>
