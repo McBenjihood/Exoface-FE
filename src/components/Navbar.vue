@@ -1,13 +1,9 @@
 <script setup lang="ts"></script>
 <template>
   <nav class="navbar">
-    <router-link class="logo" to="/">Exoface</router-link>
-
-    <div class="links">
-      <router-link to="/student">Meine VMs</router-link>
-      <router-link to="/teacher">Klassen</router-link>
-      <router-link to="/login">Login</router-link>
-    </div>
+    <router-link class="logo" to="/">
+      <img src="/logo.png" alt="logo" />
+    </router-link>
   </nav>
 </template>
 
@@ -28,13 +24,9 @@
   text-decoration: none;
 }
 
-.links {
-  display: flex;
-  gap: 25px;
-}
-
-.links a {
-  color: #12242e;
-  text-decoration: none;
+.logo img {
+  height: 35px;
+  width: auto;
+  display: block;
 }
 </style>
