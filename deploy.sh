@@ -3,10 +3,6 @@
 PROJECT_DIR="/httpdocs"
 DEPLOY_DIR="/httpdocs/public"
 
-echo "current directory" > DEPLOY.log
-echo "project dir" >> $PROJECT_DIR/DEPLOY.log
-echo "deploy dir" >> $DEPLOY_DIR/DEPLOY.log
-
 cd "$PROJECT_DIR"
 mkdir "$DEPLOY_DIR"
 
@@ -18,6 +14,7 @@ npm run build
 
 echo "Deploying..."
 rm -rf "$DEPLOY_DIR"/*
-cp -r dist/* "$DEPLOY_DIR"/
+mv -r dist/* "$DEPLOY_DIR"/
+rm -rf "$PROJECT_DIR"/dist
 
 echo "Deployment complete."
