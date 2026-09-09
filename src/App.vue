@@ -1,9 +1,7 @@
-<script setup lang="ts">
-import LoginView from "./components/LoginView.vue";
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <LoginView />
+  <router-view />
 </template>
 
 <style scoped></style>
