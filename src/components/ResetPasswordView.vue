@@ -13,18 +13,14 @@ function login() {
   <main class="login">
     <form class="block" @submit.prevent="login">
       <img class="logo" src="/logo.png" alt="logo" />
-      <h1>Anmelden</h1>
-
+      <h1>Password setzen</h1>
+      <p class="notice">
+        Der Link zum Setzen des Passworts wird per E-Mail zugestellt.
+      </p>
       <label for="email">E-Mail</label>
       <input id="email" v-model="email" type="email" />
-
-      <label for="passwort">Passwort</label>
-      <input id="passwort" v-model="passwort" type="password" />
-
-      <a class="link" href="/resetpassword">
-        Erste Anmeldung oder Passwort vergessen?
-      </a>
-      <button type="submit">Anmelden</button>
+      <a class="link" href="/login">Zurück zur Anmeldung</a>
+      <button type="submit">Link senden</button>
     </form>
   </main>
 </template>
@@ -100,5 +96,12 @@ button {
 
 button:hover {
   background-color: #075985;
+}
+
+.notice {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5a6b77;
 }
 </style>
