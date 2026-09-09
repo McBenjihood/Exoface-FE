@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import LoginView from "./components/LoginView.vue";
+import Navbar from "./Navbar.vue";
 </script>
 
 <template>
-  <LoginView />
+  <Navbar />
 </template>
 
 <style scoped></style>
