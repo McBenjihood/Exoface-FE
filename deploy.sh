@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-PROJECT_DIR="./"
-DEPLOY_DIR="./public"
+PROJECT_DIR="httpdocs/"
+DEPLOY_DIR="httpdocs/public"
 
 cd "$PROJECT_DIR"
 
