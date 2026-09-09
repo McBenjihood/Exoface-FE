@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROJECT_DIR="/httpdocs"
-DEPLOY_DIR="/httpdocs/public"
+DEPLOY_DIR="/httpdocs/build"
 
 cd "$PROJECT_DIR"
 mkdir "$DEPLOY_DIR"
