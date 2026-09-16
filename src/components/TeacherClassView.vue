@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Navbar from './Navbar.vue';
+import router from '../router.ts'
+
+const props = defineProps<{
+  modulName: string;
+  klassenTitle: string;
+}>();
+
 
 interface Student {
   id: number;
@@ -76,32 +83,39 @@ function handleReset(student: Student) {
 function handleDelete(id: number) {
   students.value = students.value.filter(s => s.id !== id);
 }
+function backtolast()
+{
+  router.push('/teacherview')
+}
+function uploadcsv()
+{
+  router.push('/csv');
+}
 </script>
 
 <template>
   <div class="page-wrapper">
-    <!-- Navbar oben auf voller Breite -->
     <header class="navbar-container">
       <Navbar />
     </header>
 
-    <!-- Zentrierter Hauptinhalt -->
     <main class="class-view-container">
       <!-- Header Navigation -->
       <div class="top-header">
-        <button class="icon-btn back-btn" aria-label="Zurück">
+        <button @click='backtolast' class="icon-btn back-btn" aria-label="Zurück">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
         <div class="header-tags">
-          <span class="badge badge-outline">D24a</span>
-          <span class="module-title">M111</span>
+          <span class="badge badge-outline">{{klassenTitle}}</span>
+          <span class="module-title">{{modulName}}</span>
+          <button @click="uploadcsv" class="icon-btn upload-btn" aria-label="Upload CSV">
+          </button>
         </div>
       </div>
 
-      <!-- Akkordeon Liste -->
       <div class="student-list">
         <div
             v-for="student in students"
@@ -212,12 +226,14 @@ function handleDelete(id: number) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  padding-right: 40rem;
 }
 
 .badge-outline {
   border: 2px solid #2d3748;
   border-radius: 6px;
-  padding: 0.2rem 0.8rem;
+  padding: 0.2rem;
+
   font-weight: 600;
   font-size: 1rem;
 }

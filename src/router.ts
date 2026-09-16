@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "./components/LoginView.vue";
 import StudentView from "./components/StudentView.vue";
 import TeacherView from "./components/TeacherView.vue";
-import TeacherClassView from "./components/TeacherClassView.vue";
 import ResetPasswordView from "./components/ResetPasswordView.vue";
+import CSV from "./components/CSV.vue";
 
 
 const routes = [
@@ -11,8 +11,15 @@ const routes = [
   { path: "/login", component: LoginView },
     { path: "/studentview", component: StudentView },
     { path: "/teacherview", component: TeacherView },
-    { path: "/teacherclassview", component: TeacherClassView }
-  { path: "/resetpassword", component: ResetPasswordView },
+    { path: "/csv", component: CSV },
+
+    { path: "/resetpassword", component: ResetPasswordView },
+    {
+        path: '/teacherclassview/:modulName/:klassenTitle',
+        name: 'teacherclassview',
+        component: () => import('./components/TeacherClassView.vue'),
+        props: true
+    }
 
 ];
 

@@ -55,9 +55,16 @@ function addClass() {
     closeClassModal();
   }
 }
-function pushtoclassview()
-{
-  router.push('/TeacherClassView')
+function pushtoclassview(modulName: string, klasseTitle: string) {
+  router.push({
+    name: 'teacherclassview',
+    params: {
+      modulName: modulName,
+      klassenTitle: klasseTitle
+    }
+  }).catch(err => {
+    console.error('Router-Fehler:', err);
+  });
 }
 </script>
 
@@ -79,15 +86,15 @@ function pushtoclassview()
       </div>
 
       <div class="klassen-container">
-        <div @click="pushtoclassview"
-            v-for="(klasse, kIndex) in modul.klassen"
-            :key="kIndex"
-            class="klasse-card"
+        <div @click="pushtoclassview(modul.name, klasse.title)"
+             v-for="(klasse, kIndex) in modul.klassen"
+             :key="kIndex"
+             class="klasse-card"
         >
           <span class="klasse-title">{{ klasse.title }}</span>
           <span class="klasse-status" :class="{ active: klasse.active }">
-            {{ klasse.status }}
-          </span>
+      {{ klasse.status }}
+    </span>
         </div>
       </div>
     </div>
