@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
 import { ref } from "vue";
-import router from "../router.ts";
+import { useRouter } from "vue-router";
+import { getUser, logout } from "../auth";
 
+const router = useRouter();
 const open = ref(false);
-const email = ref("lehrer@exoface.ch");
+const user = getUser();
 
-onMounted(() => {
-  const storedEmail = localStorage.getItem("teacherEmail");
-  if (storedEmail) {
-    email.value = storedEmail;
-  }
-});
-
-function logout() {
-  localStorage.removeItem("teacherEmail");
+function handleLogout() {
+  logout();
   router.push("/login");
 }
 </script>
@@ -30,9 +24,11 @@ function logout() {
       </button>
 
       <div v-if="open" class="menu">
-        <div class="email">{{ email }}</div>
+        <div class="email">{{ user?.email }}</div>
 
-        <a href="/login" @click.prevent="logout" class="logout">Abmelden</a>
+        <a href="/login" @click.prevent="handleLogout" class="logout"
+          >Abmelden</a
+        >
       </div>
     </div>
   </nav>

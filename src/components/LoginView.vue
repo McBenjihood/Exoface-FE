@@ -1,24 +1,29 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { login } from "../api";
+import { saveUser } from "../auth";
 
 const router = useRouter();
 const email = ref("");
 const passwort = ref("");
+const error = ref("");
 
-localStorage.setItem("teacherEmail", email.value.trim());
-
-function login() {
-  if (email.value.trim() !== "") {
-    localStorage.setItem("teacherEmail", email.value.trim());
-    router.push("/teacherview");
+async function handleLogin() {
+  error.value = "";
+  try {
+    const user = await login(email.value, passwort.value);
+    saveUser(user);
+    router.push("/overview");
+  } catch (e) {
+    error.value = (e as Error).message;
   }
 }
 </script>
 
 <template>
   <main class="login">
-    <form class="block" @submit.prevent="login">
+    <form class="block" @submit.prevent="handleLogin">
       <img class="logo" src="/logo.png" alt="logo" />
       <h1>Anmelden</h1>
 
@@ -31,6 +36,7 @@ function login() {
       <a class="link" href="/resetpassword">
         Erste Anmeldung oder Passwort vergessen?
       </a>
+      <p v-if="error" class="error">{{ error }}</p>
       <button type="submit">Anmelden</button>
     </form>
   </main>
@@ -107,5 +113,10 @@ button {
 
 button:hover {
   background-color: #075985;
+}
+.error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #dc2626;
 }
 </style>
