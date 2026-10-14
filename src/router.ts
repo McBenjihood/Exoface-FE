@@ -3,7 +3,6 @@ import LoginView from "./components/LoginView.vue";
 import StudentView from "./components/StudentView.vue";
 import TeacherView from "./components/TeacherView.vue";
 import ResetPasswordView from "./components/ResetPasswordView.vue";
-import CSV from "./components/CSV.vue";
 
 
 const routes = [
@@ -11,7 +10,11 @@ const routes = [
   { path: "/login", component: LoginView },
     { path: "/studentview", component: StudentView },
     { path: "/teacherview", component: TeacherView },
-    { path: "/csv", component: CSV },
+    {
+        path: '/csv',
+        name: 'csv',
+        component: () => import('./components/CSV.vue')
+    },
 
     { path: "/resetpassword", component: ResetPasswordView },
     {

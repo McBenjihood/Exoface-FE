@@ -1,7 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import {onMounted} from "vue";
 import Papa from 'papaparse';
 import router from '../router.ts';
+const modulName = ref('');
+const klassenTitle = ref('');
+
+onMounted(() => {
+  modulName.value = history.state.modulName || '';
+  klassenTitle.value = history.state.klassenTitle || '';
+});
+
+
+
+
 const parsedData = ref<any[]>([]);
 
 function handleFileUpload(event: Event) {
@@ -21,7 +33,7 @@ function handleFileUpload(event: Event) {
       console.error('Fehler beim Parsem:', error);
     }
   });
-  router.push('/teacherclassview');
+  router.push(`/teacherclassview/${modulName.value}/${klassenTitle.value}`);
 }
 </script>
 

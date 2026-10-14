@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Navbar from './Navbar.vue';
 import router from '../router.ts'
 
 const props = defineProps<{
@@ -87,20 +86,22 @@ function backtolast()
 {
   router.push('/teacherview')
 }
-function uploadcsv()
-{
-  router.push('/csv');
+function uploadcsv() {
+  router.push({
+    path: '/csv',
+    state: {
+      modulName: props.modulName,
+      klassenTitle: props.klassenTitle
+    }
+  });
 }
 </script>
 
 <template>
   <div class="page-wrapper">
-    <header class="navbar-container">
-      <Navbar />
-    </header>
+
 
     <main class="class-view-container">
-      <!-- Header Navigation -->
       <div class="top-header">
         <button @click='backtolast' class="icon-btn back-btn" aria-label="Zurück">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -111,7 +112,8 @@ function uploadcsv()
         <div class="header-tags">
           <span class="badge badge-outline">{{klassenTitle}}</span>
           <span class="module-title">{{modulName}}</span>
-          <button @click="uploadcsv" class="icon-btn upload-btn" aria-label="Upload CSV">
+          <button @click="uploadcsv" class="icon-btn-upload-btn">
+            upload CSV
           </button>
         </div>
       </div>
@@ -123,7 +125,6 @@ function uploadcsv()
             class="student-card"
             :class="{ expanded: student.expanded }"
         >
-          <!-- Header Zeile -->
           <div class="student-header" @click="toggleExpand(student)">
             <span class="student-name">{{ student.name }}</span>
 
@@ -423,5 +424,9 @@ function uploadcsv()
 .btn-danger:hover {
   background-color: #fff5f5;
   border-color: #e53e3e;
+}
+.icon-btn-upload-btn
+{
+  margin-left: 40rem;
 }
 </style>
