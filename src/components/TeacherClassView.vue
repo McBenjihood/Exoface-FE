@@ -93,6 +93,17 @@ function uploadcsv() {
     },
   });
 }
+
+function goToVM(studentName: string) {
+  router.push({
+    name: "teachervmdashboard",
+    params: {
+      modulName: props.modulName,
+      klassenTitle: props.klassenTitle,
+      student: studentName,
+    },
+  });
+}
 </script>
 
 <template>
@@ -158,7 +169,11 @@ function uploadcsv() {
           </div>
 
           <!-- Detail Panel -->
-          <div v-if="student.expanded" class="student-details">
+          <div
+            v-if="student.expanded"
+            class="student-details clickable-details"
+            @click="goToVM(student.name)"
+          >
             <div class="info-content">
               <div class="info-group">
                 <span class="info-label">Name</span>
@@ -187,7 +202,7 @@ function uploadcsv() {
             </div>
 
             <!-- Actions -->
-            <div class="action-buttons">
+            <div class="action-buttons" @click.stop>
               <button class="btn btn-action" @click="handleStartStop(student)">
                 {{ student.status === "active" ? "Stop" : "Start" }}
               </button>
@@ -441,5 +456,14 @@ function uploadcsv() {
 }
 .icon-btn-upload-btn {
   margin-left: 40rem;
+}
+
+.clickable-details {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-details:hover {
+  background-color: #f8fafc;
 }
 </style>

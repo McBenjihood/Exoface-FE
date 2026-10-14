@@ -27,8 +27,10 @@ const routes = [
     props: true,
   },
   {
-    path: "/teachervmdashboard",
+    path: "/teachervmdashboard/:modulName/:klassenTitle/:student",
+    name: "teachervmdashboard",
     component: TeacherVMDashboard,
+    props: true,
   },
 ];
 
