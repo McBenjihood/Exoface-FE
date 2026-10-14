@@ -3,27 +3,18 @@ import LoginView from "./components/LoginView.vue";
 import StudentView from "./components/StudentView.vue";
 import TeacherView from "./components/TeacherView.vue";
 import ResetPasswordView from "./components/ResetPasswordView.vue";
-
+import TeacherVMDashboard from "./components/TeacherVMDashboard.vue"; // <-- Gefehlt!
 
 const routes = [
   { path: "/", redirect: "/login" },
-  { path: "/login", component: LoginView },
-    { path: "/studentview", component: StudentView },
-    { path: "/teacherview", component: TeacherView },
-    {
-        path: '/csv',
-        name: 'csv',
-        component: () => import('./components/CSV.vue')
-    },
-
-    { path: "/resetpassword", component: ResetPasswordView },
-    {
-        path: '/teacherclassview/:modulName/:klassenTitle',
-        name: 'teacherclassview',
-        component: () => import('./components/TeacherClassView.vue'),
-        props: true
-    }
-
+  { path: "/login", component: LoginView, meta: { open: true } },
+  { path: "/studentview", component: StudentView },
+  { path: "/teacherview", component: TeacherView },
+  {
+    path: "/csv",
+    name: "csv",
+    component: () => import("./components/CSV.vue"),
+  },
   {
     path: "/resetpassword",
     component: ResetPasswordView,
@@ -35,7 +26,10 @@ const routes = [
     component: () => import("./components/TeacherClassView.vue"),
     props: true,
   },
-  { path: "/teachervmdashboard", component: TeacherVMDashboard },
+  {
+    path: "/teachervmdashboard",
+    component: TeacherVMDashboard,
+  },
 ];
 
 const router = createRouter({
@@ -44,13 +38,3 @@ const router = createRouter({
 });
 
 export default router;
-/*
-import CSV from "./components/CSV.vue";
-import TeacherVMDashboard from "./components/TeacherVMDashboard.vue";
-
-const routes = [
-  { path: "/", redirect: "/login" },
-  { path: "/login", component: LoginView, meta: { open: true } },
-  { path: "/studentview", component: StudentView },
-  { path: "/teacherview", component: TeacherView },
-  { path: "/csv", component: CSV },*/

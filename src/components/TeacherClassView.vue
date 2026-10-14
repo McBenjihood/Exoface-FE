@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import Navbar from "./Navbar.vue";
 import router from "../router.ts";
 
 const props = defineProps<{
@@ -86,27 +85,18 @@ function backtolast() {
   router.push("/teacherview");
 }
 function uploadcsv() {
-<<<<<<< HEAD
   router.push({
-    path: '/csv',
+    path: "/csv",
     state: {
       modulName: props.modulName,
-      klassenTitle: props.klassenTitle
-    }
+      klassenTitle: props.klassenTitle,
+    },
   });
-=======
-  router.push("/csv");
->>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
 }
 </script>
 
 <template>
   <div class="page-wrapper">
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
     <main class="class-view-container">
       <div class="top-header">
         <button
@@ -127,21 +117,11 @@ function uploadcsv() {
         </button>
 
         <div class="header-tags">
-<<<<<<< HEAD
-          <span class="badge badge-outline">{{klassenTitle}}</span>
-          <span class="module-title">{{modulName}}</span>
+          <span class="badge badge-outline">{{ klassenTitle }}</span>
+          <span class="module-title">{{ modulName }}</span>
           <button @click="uploadcsv" class="icon-btn-upload-btn">
             upload CSV
           </button>
-=======
-          <span class="badge badge-outline">{{ klassenTitle }}</span>
-          <span class="module-title">{{ modulName }}</span>
-          <button
-            @click="uploadcsv"
-            class="icon-btn upload-btn"
-            aria-label="Upload CSV"
-          ></button>
->>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
         </div>
       </div>
 
@@ -459,12 +439,7 @@ function uploadcsv() {
   background-color: #fff5f5;
   border-color: #e53e3e;
 }
-<<<<<<< HEAD
-.icon-btn-upload-btn
-{
+.icon-btn-upload-btn {
   margin-left: 40rem;
 }
 </style>
-=======
-</style>
->>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
