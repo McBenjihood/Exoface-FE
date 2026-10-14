@@ -1,20 +1,16 @@
 #!/bin/bash
+set -e
 
-PROJECT_DIR="/httpdocs"
-DEPLOY_DIR="/httpdocs/build"
+cd "$(dirname "$0")"
 
-cd "$PROJECT_DIR"
-mkdir "$DEPLOY_DIR"
+TARGET_DIR="../build"
 
-echo "Installing dependencies..."
-npm i
-
-echo "Building..."
+npm install
 npm run build
 
-echo "Deploying..."
-rm -rf "$DEPLOY_DIR"/*
-mv -r dist/* "$DEPLOY_DIR"/
-rm -rf "$PROJECT_DIR"/dist
+mkdir -p "$TARGET_DIR"
+rm -rf "${TARGET_DIR:?}"/*
+mv dist/* "$TARGET_DIR"/
+rmdir dist
 
-echo "Deployment complete."
+echo "Deployment finished"
