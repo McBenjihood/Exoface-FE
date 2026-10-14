@@ -1,8 +1,22 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { ref } from "vue";
+import router from "../router.ts";
 
 const open = ref(false);
 const email = ref("lehrer@exoface.ch");
+
+onMounted(() => {
+  const storedEmail = localStorage.getItem("teacherEmail");
+  if (storedEmail) {
+    email.value = storedEmail;
+  }
+});
+
+function logout() {
+  localStorage.removeItem("teacherEmail");
+  router.push("/login");
+}
 </script>
 <template>
   <nav class="navbar">
@@ -18,7 +32,7 @@ const email = ref("lehrer@exoface.ch");
       <div v-if="open" class="menu">
         <div class="email">{{ email }}</div>
 
-        <router-link to="/login" class="logout">Abmelden</router-link>
+        <a href="/login" @click.prevent="logout" class="logout">Abmelden</a>
       </div>
     </div>
   </nav>
