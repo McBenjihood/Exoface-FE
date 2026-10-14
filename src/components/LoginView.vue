@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const email = ref("");
 const passwort = ref("");
 
+localStorage.setItem("teacherEmail", email.value.trim());
+
 function login() {
-  console.log(email.value, passwort.value);
+  if (email.value.trim() !== "") {
+    localStorage.setItem("teacherEmail", email.value.trim());
+    router.push("/teacherview");
+  }
 }
 </script>
 
