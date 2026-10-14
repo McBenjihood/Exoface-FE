@@ -157,7 +157,6 @@ function uploadcsv() {
             </div>
           </div>
 
-          <!-- Detail Panel -->
           <div v-if="student.expanded" class="student-details">
             <div class="info-content">
               <div class="info-group">
@@ -186,7 +185,6 @@ function uploadcsv() {
               </div>
             </div>
 
-            <!-- Actions -->
             <div class="action-buttons">
               <button class="btn btn-action" @click="handleStartStop(student)">
                 {{ student.status === "active" ? "Stop" : "Start" }}

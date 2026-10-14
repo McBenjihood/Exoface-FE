@@ -1,51 +1,70 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-
 const currentTeacherID = ref(1);
-
 const activeModul = ref<any>(null);
 
 const dbData = ref({
-  teachers: [
-    { teacherID: 1, name: "Marc Keller", email: "m.keller@schule.ch" },
-    { teacherID: 2, name: "Sarah Meier", email: "s.meier@schule.ch" }
+  User: [
+    { userId: 1, name: "Marc", surname: "Keller", email: "m.keller@schule.ch", role: "lehrer" },
+    { userId: 101, name: "Lukas", surname: "Weber", email: "l.weber@stud.schule.ch", role: "schueler", enabled: true, klassenId: 1 },
+    { userId: 102, name: "Anna", surname: "Fischer", email: "a.fischer@stud.schule.ch", role: "schueler", enabled: true, klassenId: 1 }
   ],
   modules: [
     { moduleID: 1, abbreviation: "M111", description: "Netzwerke und Serverinfrastruktur" },
-    { moduleID: 2, abbreviation: "M183", description: "Applikationssicherheit implementieren" },
-    { moduleID: 3, abbreviation: "M306", description: "IT-Projekte abwickeln" }
+    { moduleID: 2, abbreviation: "M183", description: "Applikationssicherheit implementieren" }
   ],
   class: [
-    { classID: 1, name: "D24a" },
-    { classID: 2, name: "D24b" }
+    { classID: 1, name: "D24a" }
   ],
   ClassModule: [
-    { moduleID: 1, classID: 1 },
-    { moduleID: 1, classID: 2 },
-    { moduleID: 2, classID: 1 },
-    { moduleID: 3, classID: 2 }
+    { moduleID: 1, classID: 1 }
   ],
-  TeacherModule: [
-    { teacherModuleID: 1, moduleID: 1, teacherID: 1 },
-    { teacherModuleID: 2, moduleID: 2, teacherID: 1 },
-    { teacherModuleID: 3, moduleID: 2, teacherID: 2 },
-    { teacherModuleID: 4, moduleID: 3, teacherID: 2 }
-  ],
-  Students: [
-    { studentID: 101, name: "Lukas Weber", email: "l.weber@stud.schule.ch", enabled: true, classID: 1 },
-    { studentID: 102, name: "Anna Fischer", email: "a.fischer@stud.schule.ch", enabled: true, classID: 1 },
-    { studentID: 103, name: "Tim Schneider", email: "t.schneider@stud.schule.ch", enabled: false, classID: 2 }
+  UserModul: [
+    { moduleID: 1, userId: 1 },
+    { moduleID: 2, userId: 1 }
   ]
 });
 
-const displayModules = computed(() => {
-  const teacherModuleIDs = dbData.value.TeacherModule
-      .filter((tm) => tm.teacherID === currentTeacherID.value)
-      .map((tm) => tm.moduleID);
+// Nimmt die importierten Daten aus dem Router-State entgegen
+onMounted(() => {
+  const payload = history.state?.importedPayload as {
+    klasseName: string;
+    students: Array<{ name: string; surname: string; email: string }>;
+  } | undefined;
 
+  if (payload && payload.klasseName) {
+    let existingClass = dbData.value.class.find(
+        (c) => c.name.toLowerCase() === payload.klasseName.toLowerCase()
+    );
+
+    if (!existingClass) {
+      existingClass = { classID: Date.now(), name: payload.klasseName };
+      dbData.value.class.push(existingClass);
+    }
+
+    payload.students.forEach((s, index) => {
+      dbData.value.User.push({
+        userId: Date.now() + index,
+        name: s.name,
+        surname: s.surname,
+        email: s.email || `${s.name.toLowerCase()}.${s.surname.toLowerCase()}@stud.schule.ch`,
+        role: "schueler",
+        enabled: true,
+        klassenId: existingClass!.classID
+      });
+    });
+
+    console.log("Neue Klasse & Schüler aus CSV importiert:", payload);
+  }
+});
+
+const displayModules = computed(() => {
+  const teacherModuleIDs = dbData.value.UserModul
+      .filter((um) => um.userId === currentTeacherID.value)
+      .map((um) => um.moduleID);
 
   return dbData.value.modules
       .filter((m) => teacherModuleIDs.includes(m.moduleID))
@@ -57,8 +76,10 @@ const displayModules = computed(() => {
         const klassen = dbData.value.class
             .filter((c) => assignedClassIDs.includes(c.classID))
             .map((c) => {
-              const classStudents = dbData.value.Students.filter((s) => s.classID === c.classID);
-              const activeCount = classStudents.filter((s) => s.enabled).length;
+              const classStudents = dbData.value.User.filter(
+                  (u) => u.role === "schueler" && u.klassenId === c.classID
+              );
+              const activeCount = classStudents.filter((u) => u.enabled).length;
 
               return {
                 classID: c.classID,
@@ -77,28 +98,19 @@ const displayModules = computed(() => {
       });
 });
 
+// Modals Steuerung
 const showModal = ref(false);
-const showClassModal = ref(false);
+const showClassSelectModal = ref(false);
 const newModulName = ref("");
-const newClassName = ref("");
+const selectedClassIDs = ref<number[]>([]);
 
 function openModal() {
   newModulName.value = "";
   showModal.value = true;
 }
 
-function openClassModal(modul: any) {
-  activeModul.value = modul;
-  newClassName.value = "";
-  showClassModal.value = true;
-}
-
 function closeModal() {
   showModal.value = false;
-}
-
-function closeClassModal() {
-  showClassModal.value = false;
 }
 
 function addModul() {
@@ -109,74 +121,84 @@ function addModul() {
       abbreviation: newModulName.value.trim(),
       description: "Neues Modul"
     });
-    dbData.value.TeacherModule.push({
-      teacherModuleID: Date.now(),
+    dbData.value.UserModul.push({
       moduleID: newModuleID,
-      teacherID: currentTeacherID.value
+      userId: currentTeacherID.value
     });
     closeModal();
   }
 }
 
-function addClass() {
-  if (newClassName.value.trim() !== "" && activeModul.value) {
-    let existingClass = dbData.value.class.find(
-        (c) => c.name.toLowerCase() === newClassName.value.trim().toLowerCase()
-    );
+function openClassSelectModal(modul: any) {
+  activeModul.value = modul;
+  selectedClassIDs.value = dbData.value.ClassModule
+      .filter((cm) => cm.moduleID === modul.moduleID)
+      .map((cm) => cm.classID);
 
-    if (!existingClass) {
-      existingClass = { classID: Date.now(), name: newClassName.value.trim() };
-      dbData.value.class.push(existingClass);
-    }
+  showClassSelectModal.value = true;
+}
 
+function closeClassSelectModal() {
+  showClassSelectModal.value = false;
+}
+
+function saveClassSelection() {
+  if (!activeModul.value) return;
+
+  const currentModuleID = activeModul.value.moduleID;
+
+  dbData.value.ClassModule = dbData.value.ClassModule.filter(
+      (cm) => cm.moduleID !== currentModuleID
+  );
+
+  selectedClassIDs.value.forEach((classID) => {
     dbData.value.ClassModule.push({
-      moduleID: activeModul.value.moduleID,
-      classID: existingClass.classID
+      moduleID: currentModuleID,
+      classID: classID
     });
+  });
 
-    closeClassModal();
-  }
+  closeClassSelectModal();
 }
 
 function pushtoclassview(modulName: string, klasseTitle: string) {
-  router
-      .push({
-        name: "teacherclassview",
-        params: {
-          modulName: modulName,
-          klassenTitle: klasseTitle
-        }
-      })
-      .catch((err) => {
-        console.error("Router-Fehler:", err);
-      });
+  router.push(`/teacherclassview/${modulName}/${klasseTitle}`);
+}
+
+function goToCsvImport() {
+  router.push('/csv');
 }
 </script>
 
 <template>
   <main class="dashboard">
-    <h1 class="page-title">
-      Hallo {{ dbData.teachers.find(t => t.teacherID === currentTeacherID)?.name }}
-    </h1>
+    <div class="header-top">
+      <h1 class="page-title">
+        Hallo {{ dbData.User.find(u => u.userId === currentTeacherID)?.name }}
+      </h1>
+      <button @click="goToCsvImport" class="btn btn-secondary">
+        📁 CSV importieren
+      </button>
+    </div>
 
     <div
-        v-for="(modul, mIndex) in displayModules"
-        :key="mIndex"
+        v-for="modul in displayModules"
+        :key="modul.moduleID"
         class="modul-box-large"
     >
       <div class="modul-header">
         <h2 class="modul-name">{{ modul.name }} - {{ modul.description }}</h2>
-        <button @click="openClassModal(modul)" class="btn btn-primary">
-          Klasse hinzufügen
+        <button @click="openClassSelectModal(modul)" class="btn btn-primary">
+          Klassen zuordnen
         </button>
       </div>
 
       <div class="klassen-container">
         <div
-            @click="pushtoclassview(modul.name, klasse.title)"
-            v-for="(klasse, kIndex) in modul.klassen"
-            :key="kIndex"
+            v-for="klasse in modul.klassen"
+            :key="klasse.classID"
             class="klasse-card"
+            @click="pushtoclassview(modul.name, klasse.title)"
         >
           <span class="klasse-title">{{ klasse.title }}</span>
           <span class="klasse-status" :class="{ active: klasse.active }">
@@ -186,33 +208,47 @@ function pushtoclassview(modulName: string, klasseTitle: string) {
       </div>
     </div>
 
+    <!-- Button: Neues Modul erstellen -->
     <button @click="openModal" class="btn btn-secondary neues-modul">
       + Neues Modul erstellen
     </button>
 
+    <!-- Modal: Klassen für Modul auswählen -->
     <div
-        v-if="showClassModal"
+        v-if="showClassSelectModal"
         class="modal-overlay"
-        @click.self="closeClassModal"
+        @click.self="closeClassSelectModal"
     >
       <div class="modal-content">
-        <h3>Neue Klasse hinzufügen</h3>
-        <input
-            v-model="newClassName"
-            type="text"
-            placeholder="D24a..."
-            @keyup.enter="addClass"
-            autofocus
-        />
+        <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
+
+        <div class="checkbox-list">
+          <label
+              v-for="c in dbData.class"
+              :key="c.classID"
+              class="checkbox-item"
+          >
+            <input
+                type="checkbox"
+                :value="c.classID"
+                v-model="selectedClassIDs"
+            />
+            <span>Klasse {{ c.name }}</span>
+          </label>
+        </div>
+
         <div class="modal-actions">
-          <button @click="closeClassModal" class="btn btn-secondary">
+          <button @click="closeClassSelectModal" class="btn btn-secondary">
             Abbrechen
           </button>
-          <button @click="addClass" class="btn btn-primary">Erstellen</button>
+          <button @click="saveClassSelection" class="btn btn-primary">
+            Speichern
+          </button>
         </div>
       </div>
     </div>
 
+    <!-- Modal: Neues Modul erstellen -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <h3>Neues Modul erstellen</h3>
@@ -235,20 +271,6 @@ function pushtoclassview(modulName: string, klasseTitle: string) {
 </template>
 
 <style scoped>
-.teacher-switch {
-  margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #e2e8f0;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.teacher-switch select {
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  border: 1px solid #cbd5e0;
-}
-
 .dashboard {
   max-width: 1000px;
   margin: 0 auto;
@@ -259,10 +281,17 @@ function pushtoclassview(modulName: string, klasseTitle: string) {
   color: #2d3748;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 .page-title {
   font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  margin: 0;
   color: #1a202c;
 }
 
@@ -413,7 +442,7 @@ function pushtoclassview(modulName: string, klasseTitle: string) {
   margin-bottom: 1rem;
 }
 
-.modal-content input {
+.modal-content input[type="text"] {
   width: 100%;
   padding: 0.6rem;
   font-size: 1rem;
@@ -421,6 +450,23 @@ function pushtoclassview(modulName: string, klasseTitle: string) {
   border-radius: 6px;
   margin-bottom: 1.5rem;
   box-sizing: border-box;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
 }
 
 .modal-actions {
