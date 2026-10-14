@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import router from '../router.ts'
+import { ref } from "vue";
+import Navbar from "./Navbar.vue";
+import router from "../router.ts";
 
 const props = defineProps<{
   modulName: string;
   klassenTitle: string;
 }>();
-
 
 interface Student {
   id: number;
@@ -16,55 +16,55 @@ interface Student {
   cpu: string;
   ram: string;
   storage: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   expanded: boolean;
 }
 
 const students = ref<Student[]>([
   {
     id: 1,
-    name: 'Schüler 1',
-    ip: '178.162.00.01:2000',
-    uptime: '2h 17min',
-    cpu: '50 / 100%',
-    ram: '5 GB / 16 GB',
-    storage: '50 GB / 100 GB',
-    status: 'active',
-    expanded: false
+    name: "Schüler 1",
+    ip: "178.162.00.01:2000",
+    uptime: "2h 17min",
+    cpu: "50 / 100%",
+    ram: "5 GB / 16 GB",
+    storage: "50 GB / 100 GB",
+    status: "active",
+    expanded: false,
   },
   {
     id: 2,
-    name: 'Schüler 2',
-    ip: '178.162.00.02:2000',
-    uptime: '1h 05min',
-    cpu: '20 / 100%',
-    ram: '4 GB / 16 GB',
-    storage: '30 GB / 100 GB',
-    status: 'active',
-    expanded: false
+    name: "Schüler 2",
+    ip: "178.162.00.02:2000",
+    uptime: "1h 05min",
+    cpu: "20 / 100%",
+    ram: "4 GB / 16 GB",
+    storage: "30 GB / 100 GB",
+    status: "active",
+    expanded: false,
   },
   {
     id: 3,
-    name: 'Schüler 3',
-    ip: '178.162.00.03:2000',
-    uptime: '0h 45min',
-    cpu: '10 / 100%',
-    ram: '2 GB / 16 GB',
-    storage: '20 GB / 100 GB',
-    status: 'inactive',
-    expanded: false
+    name: "Schüler 3",
+    ip: "178.162.00.03:2000",
+    uptime: "0h 45min",
+    cpu: "10 / 100%",
+    ram: "2 GB / 16 GB",
+    storage: "20 GB / 100 GB",
+    status: "inactive",
+    expanded: false,
   },
   {
     id: 4,
-    name: 'Max Muster',
-    ip: '178.162.00.01:2000',
-    uptime: '2h 17min',
-    cpu: '50 / 100%',
-    ram: '5 GB / 16 GB',
-    storage: '50 GB / 100 GB',
-    status: 'active',
-    expanded: true
-  }
+    name: "Max Muster",
+    ip: "178.162.00.01:2000",
+    uptime: "2h 17min",
+    cpu: "50 / 100%",
+    ram: "5 GB / 16 GB",
+    storage: "50 GB / 100 GB",
+    status: "active",
+    expanded: true,
+  },
 ]);
 
 function toggleExpand(student: Student) {
@@ -72,21 +72,21 @@ function toggleExpand(student: Student) {
 }
 
 function handleStartStop(student: Student) {
-  student.status = student.status === 'active' ? 'inactive' : 'active';
+  student.status = student.status === "active" ? "inactive" : "active";
 }
 
 function handleReset(student: Student) {
-  console.log('Reset:', student.name);
+  console.log("Reset:", student.name);
 }
 
 function handleDelete(id: number) {
-  students.value = students.value.filter(s => s.id !== id);
+  students.value = students.value.filter((s) => s.id !== id);
 }
-function backtolast()
-{
-  router.push('/teacherview')
+function backtolast() {
+  router.push("/teacherview");
 }
 function uploadcsv() {
+<<<<<<< HEAD
   router.push({
     path: '/csv',
     state: {
@@ -94,56 +94,83 @@ function uploadcsv() {
       klassenTitle: props.klassenTitle
     }
   });
+=======
+  router.push("/csv");
+>>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
 }
 </script>
 
 <template>
   <div class="page-wrapper">
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
     <main class="class-view-container">
       <div class="top-header">
-        <button @click='backtolast' class="icon-btn back-btn" aria-label="Zurück">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button
+          @click="backtolast"
+          class="icon-btn back-btn"
+          aria-label="Zurück"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
         <div class="header-tags">
+<<<<<<< HEAD
           <span class="badge badge-outline">{{klassenTitle}}</span>
           <span class="module-title">{{modulName}}</span>
           <button @click="uploadcsv" class="icon-btn-upload-btn">
             upload CSV
           </button>
+=======
+          <span class="badge badge-outline">{{ klassenTitle }}</span>
+          <span class="module-title">{{ modulName }}</span>
+          <button
+            @click="uploadcsv"
+            class="icon-btn upload-btn"
+            aria-label="Upload CSV"
+          ></button>
+>>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
         </div>
       </div>
 
       <div class="student-list">
         <div
-            v-for="student in students"
-            :key="student.id"
-            class="student-card"
-            :class="{ expanded: student.expanded }"
+          v-for="student in students"
+          :key="student.id"
+          class="student-card"
+          :class="{ expanded: student.expanded }"
         >
           <div class="student-header" @click="toggleExpand(student)">
             <span class="student-name">{{ student.name }}</span>
 
             <div class="header-right">
               <span
-                  class="status-dot"
-                  :class="student.status"
-                  :title="student.status === 'active' ? 'Aktiv' : 'Inaktiv'"
+                class="status-dot"
+                :class="student.status"
+                :title="student.status === 'active' ? 'Aktiv' : 'Inaktiv'"
               ></span>
 
               <svg
-                  class="chevron"
-                  :class="{ open: student.expanded }"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
+                class="chevron"
+                :class="{ open: student.expanded }"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
               >
                 <path d="M6 9l6 6 6-6" />
               </svg>
@@ -182,12 +209,15 @@ function uploadcsv() {
             <!-- Actions -->
             <div class="action-buttons">
               <button class="btn btn-action" @click="handleStartStop(student)">
-                {{ student.status === 'active' ? 'Stop' : 'Start' }}
+                {{ student.status === "active" ? "Stop" : "Start" }}
               </button>
               <button class="btn btn-action" @click="handleReset(student)">
                 Reset
               </button>
-              <button class="btn btn-action btn-danger" @click="handleDelete(student.id)">
+              <button
+                class="btn btn-action btn-danger"
+                @click="handleDelete(student.id)"
+              >
                 Löschen
               </button>
             </div>
@@ -212,7 +242,9 @@ function uploadcsv() {
   max-width: 800px;
   margin: 0 auto;
   padding: 1.5rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   color: #2d3748;
 }
 
@@ -273,7 +305,9 @@ function uploadcsv() {
   background-color: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .student-card.expanded {
@@ -425,8 +459,12 @@ function uploadcsv() {
   background-color: #fff5f5;
   border-color: #e53e3e;
 }
+<<<<<<< HEAD
 .icon-btn-upload-btn
 {
   margin-left: 40rem;
 }
 </style>
+=======
+</style>
+>>>>>>> 4de9a5baa80fa89929bd93fe1026b8a751c54289
