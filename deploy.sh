@@ -8,7 +8,7 @@ npm install
 npm run build
 
 rm -rf "${TARGET_DIR}"/*
-mkdir -p "$TARGET_DIR"
+mkdir "$TARGET_DIR"
 mv dist/* "$TARGET_DIR"/
 rmdir dist
 
