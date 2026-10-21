@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
+import { vms } from "../mockData";
+
+const props = defineProps<{
+  vmID: string;
+}>();
 
 const router = useRouter();
-const active = ref(true);
+
+// VM aus den Testdaten über die ID in der URL suchen
+const vm = computed(() => vms.find((v) => v.vmID === Number(props.vmID)));
+
+function handleStartStop() {
+  if (!vm.value) return;
+  vm.value.status = vm.value.status === "active" ? "inactive" : "active";
+}
 </script>
 
 <template>
@@ -22,40 +34,49 @@ const active = ref(true);
         </svg>
       </button>
 
-      <span class="name">Max Muster</span>
-      <span v-if="active" class="dot green"></span>
-      <span v-else class="dot red"></span>
+      <template v-if="vm">
+        <span class="name">{{ vm.studentName }}</span>
+        <span
+          class="dot"
+          :class="vm.status === 'active' ? 'green' : 'red'"
+        ></span>
 
-      <div class="buttons">
-        <button class="btn">SSH Manager</button>
-        <button class="btn">Reset</button>
-        <button class="btn" @click="active = !active">
-          <span v-if="active">Stop</span>
-          <span v-else>Start</span>
-        </button>
-      </div>
+        <div class="buttons">
+          <button class="btn">SSH Manager</button>
+          <button class="btn">Reset</button>
+          <button class="btn" @click="handleStartStop">
+            {{ vm.status === "active" ? "Stop" : "Start" }}
+          </button>
+        </div>
+      </template>
     </div>
 
-    <div class="cards">
-      <div class="card">
-        <p class="label">CPU</p>
-        <p class="value">50 / 100%</p>
-      </div>
-      <div class="card">
-        <p class="label">RAM</p>
-        <p class="value">5 GB / 16 GB</p>
-      </div>
-      <div class="card">
-        <p class="label">DISK</p>
-        <p class="value">50 GB / 100 GB</p>
-      </div>
-    </div>
+    <p v-if="!vm">VM nicht gefunden.</p>
 
-    <div class="console">
-      <p class="console-title">Console</p>
-      <p v-if="active" class="console-text">Konsole wird verbunden ...</p>
-      <p v-else class="console-text">VM ist gestoppt.</p>
-    </div>
+    <template v-else>
+      <div class="cards">
+        <div class="card">
+          <p class="label">CPU</p>
+          <p class="value">{{ vm.cpu }}</p>
+        </div>
+        <div class="card">
+          <p class="label">RAM</p>
+          <p class="value">{{ vm.ram }}</p>
+        </div>
+        <div class="card">
+          <p class="label">DISK</p>
+          <p class="value">{{ vm.storage }}</p>
+        </div>
+      </div>
+
+      <div class="console">
+        <p class="console-title">Console</p>
+        <p v-if="vm.status === 'active'" class="console-text">
+          Konsole wird verbunden ...
+        </p>
+        <p v-else class="console-text">VM ist gestoppt.</p>
+      </div>
+    </template>
   </main>
 </template>
 

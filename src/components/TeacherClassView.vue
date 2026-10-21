@@ -93,6 +93,17 @@ function uploadcsv() {
     },
   });
 }
+
+function goToVM(studentName: string) {
+  router.push({
+    name: "teachervmdashboard",
+    params: {
+      modulName: props.modulName,
+      klassenTitle: props.klassenTitle,
+      student: studentName,
+    },
+  });
+}
 </script>
 
 <template>
@@ -439,5 +450,14 @@ function uploadcsv() {
 }
 .icon-btn-upload-btn {
   margin-left: 40rem;
+}
+
+.clickable-details {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.clickable-details:hover {
+  background-color: #f8fafc;
 }
 </style>

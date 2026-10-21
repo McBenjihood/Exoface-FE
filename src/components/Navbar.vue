@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { getUser, logout } from "../auth";
 
+const router = useRouter();
 const open = ref(false);
-const email = ref("lehrer@exoface.ch");
+const user = getUser();
+
+function handleLogout() {
+  logout();
+  router.push("/login");
+}
 </script>
 <template>
   <nav class="navbar">
@@ -16,9 +24,11 @@ const email = ref("lehrer@exoface.ch");
       </button>
 
       <div v-if="open" class="menu">
-        <div class="email">{{ email }}</div>
+        <div class="email">{{ user?.email }}</div>
 
-        <router-link to="/login" class="logout">Abmelden</router-link>
+        <a href="/login" @click.prevent="handleLogout" class="logout"
+          >Abmelden</a
+        >
       </div>
     </div>
   </nav>
