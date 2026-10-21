@@ -9,7 +9,6 @@ const props = defineProps<{
 
 const router = useRouter();
 
-// VM aus den Testdaten über die ID in der URL suchen
 const vm = computed(() => vms.find((v) => v.vmID === Number(props.vmID)));
 
 function handleStartStop() {
@@ -23,8 +22,8 @@ function handleStartStop() {
     <div class="top">
       <button class="back" @click="router.back()">
         <svg
-          width="24"
-          height="24"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -36,41 +35,40 @@ function handleStartStop() {
 
       <template v-if="vm">
         <span class="name">{{ vm.studentName }}</span>
-        <span
-          class="dot"
-          :class="vm.status === 'active' ? 'green' : 'red'"
-        ></span>
+        <span class="status" :class="vm.status">
+          {{ vm.status === "active" ? "läuft" : "gestoppt" }}
+        </span>
 
         <div class="buttons">
-          <button class="btn">SSH Manager</button>
-          <button class="btn">Reset</button>
-          <button class="btn" @click="handleStartStop">
-            {{ vm.status === "active" ? "Stop" : "Start" }}
+          <button>SSH Manager</button>
+          <button>Zurücksetzen</button>
+          <button @click="handleStartStop">
+            {{ vm.status === "active" ? "Stoppen" : "Starten" }}
           </button>
         </div>
       </template>
     </div>
 
-    <p v-if="!vm">VM nicht gefunden.</p>
+    <p v-if="!vm" class="leer">VM nicht gefunden.</p>
 
     <template v-else>
-      <div class="cards">
-        <div class="card">
-          <p class="label">CPU</p>
-          <p class="value">{{ vm.cpu }}</p>
+      <div class="werte">
+        <div class="wert">
+          <div class="wert-name">CPU</div>
+          <div class="wert-zahl">{{ vm.cpu }}</div>
         </div>
-        <div class="card">
-          <p class="label">RAM</p>
-          <p class="value">{{ vm.ram }}</p>
+        <div class="wert">
+          <div class="wert-name">RAM</div>
+          <div class="wert-zahl">{{ vm.ram }}</div>
         </div>
-        <div class="card">
-          <p class="label">DISK</p>
-          <p class="value">{{ vm.storage }}</p>
+        <div class="wert">
+          <div class="wert-name">Disk</div>
+          <div class="wert-zahl">{{ vm.storage }}</div>
         </div>
       </div>
 
       <div class="console">
-        <p class="console-title">Console</p>
+        <div class="console-title">Console</div>
         <p v-if="vm.status === 'active'" class="console-text">
           Konsole wird verbunden ...
         </p>
@@ -82,51 +80,50 @@ function handleStartStop() {
 
 <style scoped>
 .page {
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 24px;
-  color: #2d3748;
+  padding: 32px 20px;
 }
 
 .top {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .back {
   display: flex;
   padding: 4px;
-  color: #2d3748;
+  color: #12242e;
   background: none;
   border: none;
   cursor: pointer;
 }
 
 .back:hover {
-  opacity: 0.7;
+  color: #0369a1;
 }
 
 .name {
-  padding: 3px 12px;
+  padding: 3px 10px;
   font-weight: 600;
-  border: 2px solid #2d3748;
+  background-color: #ffffff;
+  border: 1px solid #dde5ea;
   border-radius: 6px;
 }
 
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.status {
+  font-size: 13px;
 }
 
-.green {
-  background-color: #38a169;
+.status.active {
+  color: #16a34a;
 }
 
-.red {
-  background-color: #e53e3e;
+.status.inactive {
+  color: #dc2626;
 }
 
 .buttons {
@@ -135,62 +132,84 @@ function handleStartStop() {
   margin-left: auto;
 }
 
-.btn {
-  padding: 8px 16px;
+.buttons button {
+  height: 32px;
+  padding: 0 14px;
+  font-family: inherit;
   font-size: 14px;
-  color: #2d3748;
-  background-color: white;
-  border: 1px solid #cbd5e0;
+  color: #12242e;
+  background-color: #ffffff;
+  border: 1px solid #b8c4cc;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.btn:hover {
-  background-color: #edf2f7;
+.buttons button:hover {
+  background-color: #f4f7f9;
 }
 
-.cards {
+.werte {
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
-.card {
+.wert {
   flex: 1;
-  padding: 16px 20px;
-  background-color: white;
-  border: 1px solid #cbd5e0;
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border: 1px solid #dde5ea;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.label {
-  margin: 0 0 4px;
+.wert-name {
   font-size: 13px;
-  color: #718096;
+  color: #5a6b77;
 }
 
-.value {
-  margin: 0;
+.wert-zahl {
+  margin-top: 4px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .console {
   min-height: 350px;
-  padding: 16px 20px;
-  background-color: #1a202c;
+  padding: 16px;
+  background-color: #12242e;
   border-radius: 8px;
 }
 
 .console-title {
-  margin: 0 0 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #dde5ea;
 }
 
 .console-text {
   margin: 0;
   font-family: monospace;
-  color: #a0aec0;
+  color: #b8c4cc;
+}
+
+.leer {
+  color: #5a6b77;
+}
+
+@media (max-width: 600px) {
+  .buttons {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .buttons button {
+    flex: 1;
+    padding: 0 6px;
+  }
+
+  .werte {
+    flex-direction: column;
+  }
 }
 </style>

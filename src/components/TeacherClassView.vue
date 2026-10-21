@@ -1,460 +1,411 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import router from "../router.ts";
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import { vms, type Vm } from "../mockData";
 
 const props = defineProps<{
   modulName: string;
   klassenTitle: string;
 }>();
 
-interface Student {
-  id: number;
-  name: string;
-  ip: string;
-  uptime: string;
-  cpu: string;
-  ram: string;
-  storage: string;
-  status: "active" | "inactive";
-  expanded: boolean;
+const router = useRouter();
+
+const dbData = ref({
+  modules: [
+    {
+      moduleID: 1,
+      abbreviation: "M111",
+      description: "Netzwerke und Serverinfrastruktur",
+    },
+    {
+      moduleID: 2,
+      abbreviation: "M183",
+      description: "Applikationssicherheit implementieren",
+    },
+    { moduleID: 3, abbreviation: "M306", description: "IT-Projekte abwickeln" },
+  ],
+  class: [
+    { classID: 1, name: "D24a" },
+    { classID: 2, name: "D24b" },
+  ],
+  Students: [
+    { studentID: 1, name: "Schüler 1", classID: 1 },
+    { studentID: 2, name: "Schüler 2", classID: 1 },
+    { studentID: 3, name: "Schüler 3", classID: 1 },
+    { studentID: 4, name: "Max Muster", classID: 1 },
+    { studentID: 104, name: "Jan Huppertz", classID: 1 },
+  ],
+});
+
+const openStudents = ref<number[]>([]);
+
+const currentModul = computed(() =>
+  dbData.value.modules.find((m) => m.abbreviation === props.modulName),
+);
+
+const currentClass = computed(() =>
+  dbData.value.class.find((c) => c.name === props.klassenTitle),
+);
+
+const classStudents = computed(() =>
+  dbData.value.Students.filter(
+    (s) => s.classID === currentClass.value?.classID,
+  ),
+);
+
+function getVms(studentID: number) {
+  return vms.filter(
+    (v) =>
+      v.studentID === studentID && v.moduleID === currentModul.value?.moduleID,
+  );
 }
 
-const students = ref<Student[]>([
-  {
-    id: 1,
-    name: "Schüler 1",
-    ip: "178.162.00.01:2000",
-    uptime: "2h 17min",
-    cpu: "50 / 100%",
-    ram: "5 GB / 16 GB",
-    storage: "50 GB / 100 GB",
-    status: "active",
-    expanded: false,
-  },
-  {
-    id: 2,
-    name: "Schüler 2",
-    ip: "178.162.00.02:2000",
-    uptime: "1h 05min",
-    cpu: "20 / 100%",
-    ram: "4 GB / 16 GB",
-    storage: "30 GB / 100 GB",
-    status: "active",
-    expanded: false,
-  },
-  {
-    id: 3,
-    name: "Schüler 3",
-    ip: "178.162.00.03:2000",
-    uptime: "0h 45min",
-    cpu: "10 / 100%",
-    ram: "2 GB / 16 GB",
-    storage: "20 GB / 100 GB",
-    status: "inactive",
-    expanded: false,
-  },
-  {
-    id: 4,
-    name: "Max Muster",
-    ip: "178.162.00.01:2000",
-    uptime: "2h 17min",
-    cpu: "50 / 100%",
-    ram: "5 GB / 16 GB",
-    storage: "50 GB / 100 GB",
-    status: "active",
-    expanded: true,
-  },
-]);
-
-function toggleExpand(student: Student) {
-  student.expanded = !student.expanded;
+function toggleStudent(studentID: number) {
+  if (openStudents.value.includes(studentID)) {
+    openStudents.value = openStudents.value.filter((id) => id !== studentID);
+  } else {
+    openStudents.value.push(studentID);
+  }
 }
 
-function handleStartStop(student: Student) {
-  student.status = student.status === "active" ? "inactive" : "active";
+function startStopVM(vm: Vm) {
+  vm.status = vm.status === "active" ? "inactive" : "active";
 }
 
-function handleReset(student: Student) {
-  console.log("Reset:", student.name);
+function resetVM(vm: Vm) {
+  console.log("Reset:", vm.name);
 }
 
-function handleDelete(id: number) {
-  students.value = students.value.filter((s) => s.id !== id);
+function deleteVM(vmID: number) {
+  const index = vms.findIndex((v) => v.vmID === vmID);
+  if (index !== -1) {
+    vms.splice(index, 1);
+  }
 }
+
 function backtolast() {
   router.push("/overview");
 }
+
 function uploadcsv() {
-  router.push({
-    path: "/csv",
-    state: {
-      modulName: props.modulName,
-      klassenTitle: props.klassenTitle,
-    },
-  });
+  router.push("/csv");
 }
 
-function goToVM(vmID: number) {
-  router.push({ name: "vm", params: { vmID } });
+function pushtovmview(vmID: number) {
+  router
+    .push({
+      name: "vm",
+      params: {
+        vmID: vmID,
+      },
+    })
+    .catch((err) => {
+      console.error("Router-Fehler:", err);
+    });
 }
 </script>
 
 <template>
-  <div class="page-wrapper">
-    <main class="class-view-container">
-      <div class="top-header">
-        <button
-          @click="backtolast"
-          class="icon-btn back-btn"
-          aria-label="Zurück"
+  <main class="page">
+    <div class="top">
+      <button class="back" @click="backtolast">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+      <span class="klasse-code">{{ klassenTitle }}</span>
+      <span class="modul-text">
+        {{ modulName
+        }}<template v-if="currentModul">
+          - {{ currentModul.description }}</template
+        >
+      </span>
+      <button class="csv-button" @click="uploadcsv">CSV importieren</button>
+    </div>
+
+    <section
+      v-for="student in classStudents"
+      :key="student.studentID"
+      class="schueler"
+    >
+      <div class="schueler-head" @click="toggleStudent(student.studentID)">
+        <span class="schueler-name">{{ student.name }}</span>
+        <span
+          class="pfeil"
+          :class="{ offen: openStudents.includes(student.studentID) }"
         >
           <svg
-            width="24"
-            height="24"
+            width="18"
+            height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
           >
-            <path d="M15 18l-6-6 6-6" />
+            <path d="M6 9l6 6 6-6" />
           </svg>
-        </button>
-
-        <div class="header-tags">
-          <span class="badge badge-outline">{{ klassenTitle }}</span>
-          <span class="module-title">{{ modulName }}</span>
-          <button @click="uploadcsv" class="icon-btn-upload-btn">
-            upload CSV
-          </button>
-        </div>
+        </span>
       </div>
 
-      <div class="student-list">
+      <div
+        v-if="openStudents.includes(student.studentID)"
+        class="schueler-body"
+      >
         <div
-          v-for="student in students"
-          :key="student.id"
-          class="student-card"
-          :class="{ expanded: student.expanded }"
+          v-for="vm in getVms(student.studentID)"
+          :key="vm.vmID"
+          class="vm"
+          @click="pushtovmview(vm.vmID)"
         >
-          <div class="student-header" @click="toggleExpand(student)">
-            <span class="student-name">{{ student.name }}</span>
-
-            <div class="header-right">
-              <span
-                class="status-dot"
-                :class="student.status"
-                :title="student.status === 'active' ? 'Aktiv' : 'Inaktiv'"
-              ></span>
-
-              <svg
-                class="chevron"
-                :class="{ open: student.expanded }"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+          <div class="vm-info">
+            <div class="vm-name">
+              {{ vm.name }}
+              <span class="status" :class="vm.status">
+                {{ vm.status === "active" ? "läuft" : "gestoppt" }}
+              </span>
+            </div>
+            <div class="vm-text">{{ vm.ip }}</div>
+            <div class="vm-text">Uptime: {{ vm.uptime }}</div>
+            <div class="werte">
+              <span><span class="wert-name">CPU</span> {{ vm.cpu }}</span>
+              <span><span class="wert-name">RAM</span> {{ vm.ram }}</span>
+              <span><span class="wert-name">Disk</span> {{ vm.storage }}</span>
             </div>
           </div>
 
-          <div
-            v-if="student.expanded"
-            class="student-details clickable-details"
-            @click="goToVM(student.id)"
-          >
-            <div class="info-content">
-              <div class="info-group">
-                <span class="info-label">Name</span>
-                <span class="info-value">{{ student.name }}</span>
-              </div>
-
-              <div class="info-group">
-                <span class="ip-address">{{ student.ip }}</span>
-                <span class="uptime">uptime: {{ student.uptime }}</span>
-              </div>
-
-              <div class="metrics-row">
-                <div class="metric-item">
-                  <span class="metric-icon"></span>
-                  <span>{{ student.cpu }}</span>
-                </div>
-                <div class="metric-item">
-                  <span class="metric-icon"></span>
-                  <span>{{ student.ram }}</span>
-                </div>
-                <div class="metric-item">
-                  <span class="metric-icon"></span>
-                  <span>{{ student.storage }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="action-buttons" @click.stop>
-              <button class="btn btn-action" @click="handleStartStop(student)">
-                {{ student.status === "active" ? "Stop" : "Start" }}
-              </button>
-              <button class="btn btn-action" @click="handleReset(student)">
-                Reset
-              </button>
-              <button
-                class="btn btn-action btn-danger"
-                @click="handleDelete(student.id)"
-              >
-                Löschen
-              </button>
-            </div>
+          <div class="vm-buttons" @click.stop>
+            <button @click="startStopVM(vm)">
+              {{ vm.status === "active" ? "Stoppen" : "Starten" }}
+            </button>
+            <button @click="resetVM(vm)">Zurücksetzen</button>
+            <button class="loeschen" @click="deleteVM(vm.vmID)">Löschen</button>
           </div>
         </div>
+
+        <p v-if="getVms(student.studentID).length === 0" class="leer">
+          Dieser Schüler hat in diesem Modul noch keine VM.
+        </p>
       </div>
-    </main>
-  </div>
+    </section>
+
+    <p v-if="classStudents.length === 0" class="leer">
+      In dieser Klasse sind noch keine Schüler.
+    </p>
+  </main>
 </template>
 
 <style scoped>
-.page-wrapper {
-  width: 100%;
-  min-height: 100vh;
-}
-
-.navbar-container {
-  width: 100%;
-}
-
-.class-view-container {
-  max-width: 800px;
+.page {
+  max-width: 860px;
   margin: 0 auto;
-  padding: 1.5rem;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  color: #2d3748;
+  padding: 32px 20px;
 }
 
-.top-header {
+.top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.header-tags {
+.back {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-right: 40rem;
-}
-
-.badge-outline {
-  border: 2px solid #2d3748;
-  border-radius: 6px;
-  padding: 0.2rem;
-
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.module-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #4a5568;
-}
-
-.icon-btn {
+  padding: 4px;
+  color: #12242e;
   background: none;
   border: none;
   cursor: pointer;
-  color: #2d3748;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-  transition: opacity 0.2s;
 }
 
-.icon-btn:hover {
-  opacity: 0.7;
+.back:hover {
+  color: #0369a1;
 }
 
-.student-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.student-card {
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
+.klasse-code {
+  padding: 3px 10px;
+  font-weight: 600;
   background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+  border: 1px solid #dde5ea;
+  border-radius: 6px;
 }
 
-.student-card.expanded {
-  border-color: #3182ce;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.modul-text {
+  color: #5a6b77;
 }
 
-.student-header {
+.csv-button {
+  height: 32px;
+  margin-left: auto;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #12242e;
+  background-color: #ffffff;
+  border: 1px solid #b8c4cc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.csv-button:hover {
+  background-color: #f4f7f9;
+}
+
+.schueler {
+  margin-bottom: 12px;
+  background-color: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
+}
+
+.schueler-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
+  gap: 12px;
+  padding: 14px 16px;
   cursor: pointer;
   user-select: none;
-  background-color: #ffffff;
 }
 
-.student-header:hover {
-  background-color: #f7fafc;
-}
-
-.student-name {
+.schueler-name {
   font-weight: 600;
-  font-size: 1.05rem;
 }
 
-.header-right {
+.pfeil {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin-left: auto;
+  color: #5a6b77;
+  transition: transform 0.15s;
 }
 
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-dot.active {
-  background-color: #38a169;
-}
-
-.status-dot.inactive {
-  background-color: #e53e3e;
-}
-
-.chevron {
-  transition: transform 0.2s ease;
-  color: #718096;
-}
-
-.chevron.open {
+.pfeil.offen {
   transform: rotate(180deg);
 }
 
-.student-details {
-  border-top: 1px solid #e2e8f0;
-  padding: 1.25rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1.5rem;
-  background-color: #ffffff;
-}
-
-.info-content {
+.schueler-body {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid #dde5ea;
 }
 
-.info-group {
+.vm {
   display: flex;
-  flex-direction: column;
-}
-
-.info-label {
-  font-size: 0.8rem;
-  color: #718096;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.info-value {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.ip-address {
-  font-family: monospace;
-  font-size: 1rem;
-  color: #2d3748;
-}
-
-.uptime {
-  font-size: 0.9rem;
-  color: #718096;
-}
-
-.metrics-row {
-  display: flex;
-  gap: 1.25rem;
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #4a5568;
-}
-
-.metric-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.btn {
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #dde5ea;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
-  min-width: 90px;
-  text-align: center;
 }
 
-.btn-action {
+.vm:hover {
+  border-color: #0369a1;
+}
+
+.vm-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vm-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.status.active {
+  color: #16a34a;
+}
+
+.status.inactive {
+  color: #dc2626;
+}
+
+.vm-text {
+  font-size: 14px;
+  color: #5a6b77;
+}
+
+.werte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.wert-name {
+  color: #5a6b77;
+}
+
+.vm-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vm-buttons button {
+  min-width: 120px;
+  height: 32px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #12242e;
   background-color: #ffffff;
-  border: 1px solid #cbd5e0;
-  color: #2d3748;
-}
-
-.btn-action:hover {
-  background-color: #edf2f7;
-}
-
-.btn-danger {
-  color: #e53e3e;
-  border-color: #feb2b2;
-}
-
-.btn-danger:hover {
-  background-color: #fff5f5;
-  border-color: #e53e3e;
-}
-.icon-btn-upload-btn {
-  margin-left: 40rem;
-}
-
-.clickable-details {
+  border: 1px solid #b8c4cc;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
-.clickable-details:hover {
-  background-color: #f8fafc;
+.vm-buttons button:hover {
+  background-color: #f4f7f9;
+}
+
+.vm-buttons .loeschen {
+  color: #dc2626;
+}
+
+.vm-buttons .loeschen:hover {
+  border-color: #dc2626;
+}
+
+.leer {
+  margin: 0;
+  color: #5a6b77;
+}
+
+@media (max-width: 600px) {
+  .top {
+    flex-wrap: wrap;
+  }
+
+  .vm {
+    flex-direction: column;
+  }
+
+  .vm-buttons {
+    flex-direction: row;
+  }
+
+  .vm-buttons button {
+    min-width: 0;
+    flex: 1;
+  }
 }
 </style>
