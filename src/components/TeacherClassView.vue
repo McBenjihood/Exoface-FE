@@ -88,10 +88,6 @@ function backtolast() {
   router.push("/overview");
 }
 
-function uploadcsv() {
-  router.push("/csv");
-}
-
 function pushtovmview(vmID: number) {
   router
     .push({
@@ -128,7 +124,6 @@ function pushtovmview(vmID: number) {
           - {{ currentModul.description }}</template
         >
       </span>
-      <button class="csv-button" @click="uploadcsv">CSV importieren</button>
     </div>
 
     <section
@@ -239,23 +234,6 @@ function pushtovmview(vmID: number) {
 
 .modul-text {
   color: #5a6b77;
-}
-
-.csv-button {
-  height: 32px;
-  margin-left: auto;
-  padding: 0 14px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #12242e;
-  background-color: #ffffff;
-  border: 1px solid #b8c4cc;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.csv-button:hover {
-  background-color: #f4f7f9;
 }
 
 .schueler {

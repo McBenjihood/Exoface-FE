@@ -204,86 +204,81 @@ function goToCsvImport() {
 </script>
 
 <template>
-  <main class="dashboard">
-    <div class="header-top">
-      <h1 class="page-title">
+  <main class="page">
+    <div class="top">
+      <h1>
         Hallo {{ dbData.User.find((u) => u.userId === currentTeacherID)?.name }}
       </h1>
-      <button @click="goToCsvImport" class="btn btn-secondary">
-        📁 CSV importieren
-      </button>
+      <button @click="goToCsvImport" class="btn">CSV importieren</button>
     </div>
 
-    <div
+    <section
       v-for="modul in displayModules"
       :key="modul.moduleID"
-      class="modul-box-large"
+      class="modul"
     >
-      <div class="modul-header">
-        <h2 class="modul-name">{{ modul.name }} - {{ modul.description }}</h2>
-        <button @click="openClassSelectModal(modul)" class="btn btn-primary">
+      <div class="modul-head">
+        <span class="modul-code">{{ modul.name }}</span>
+        <span class="modul-text">{{ modul.description }}</span>
+        <button
+          @click="openClassSelectModal(modul)"
+          class="btn btn-blau modul-button"
+        >
           Klassen zuordnen
         </button>
       </div>
 
-      <div class="klassen-container">
+      <div class="modul-body">
         <div
           v-for="klasse in modul.klassen"
           :key="klasse.classID"
-          class="klasse-card"
+          class="klasse"
           @click="pushtoclassview(modul.name, klasse.title)"
         >
-          <span class="klasse-title">{{ klasse.title }}</span>
-          <span class="klasse-status" :class="{ active: klasse.active }">
+          <span class="klasse-name">{{ klasse.title }}</span>
+          <span class="klasse-status" :class="{ aktiv: klasse.active }">
             {{ klasse.status }}
           </span>
         </div>
-      </div>
-    </div>
 
-    <!-- Button: Neues Modul erstellen -->
-    <button @click="openModal" class="btn btn-secondary neues-modul">
+        <p v-if="modul.klassen.length === 0" class="leer">
+          Diesem Modul ist noch keine Klasse zugeordnet.
+        </p>
+      </div>
+    </section>
+
+    <button @click="openModal" class="neues-modul">
       + Neues Modul erstellen
     </button>
 
-    <!-- Modal: Klassen für Modul auswählen -->
     <div
       v-if="showClassSelectModal"
       class="modal-overlay"
       @click.self="closeClassSelectModal"
     >
-      <div class="modal-content">
+      <div class="modal">
         <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
 
-        <div class="checkbox-list">
-          <label
-            v-for="c in dbData.class"
-            :key="c.classID"
-            class="checkbox-item"
-          >
-            <input
-              type="checkbox"
-              :value="c.classID"
-              v-model="selectedClassIDs"
-            />
-            <span>Klasse {{ c.name }}</span>
-          </label>
-        </div>
+        <label v-for="c in dbData.class" :key="c.classID" class="checkbox">
+          <input
+            type="checkbox"
+            :value="c.classID"
+            v-model="selectedClassIDs"
+          />
+          Klasse {{ c.name }}
+        </label>
 
-        <div class="modal-actions">
-          <button @click="closeClassSelectModal" class="btn btn-secondary">
-            Abbrechen
-          </button>
-          <button @click="saveClassSelection" class="btn btn-primary">
+        <div class="modal-buttons">
+          <button @click="closeClassSelectModal" class="btn">Abbrechen</button>
+          <button @click="saveClassSelection" class="btn btn-blau">
             Speichern
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal: Neues Modul erstellen -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
+      <div class="modal">
         <h3>Neues Modul erstellen</h3>
         <input
           v-model="newModulName"
@@ -292,11 +287,9 @@ function goToCsvImport() {
           @keyup.enter="addModul"
           autofocus
         />
-        <div class="modal-actions">
-          <button @click="closeModal" class="btn btn-secondary">
-            Abbrechen
-          </button>
-          <button @click="addModul" class="btn btn-primary">Erstellen</button>
+        <div class="modal-buttons">
+          <button @click="closeModal" class="btn">Abbrechen</button>
+          <button @click="addModul" class="btn btn-blau">Erstellen</button>
         </div>
       </div>
     </div>
@@ -304,205 +297,196 @@ function goToCsvImport() {
 </template>
 
 <style scoped>
-.dashboard {
-  max-width: 1000px;
+.page {
+  max-width: 860px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
-  color: #2d3748;
+  padding: 32px 20px;
 }
 
-.header-top {
+.top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  color: #1a202c;
-}
-
-.modul-box-large {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 1.5rem;
-}
-
-.modul-header {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #edf2f7;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.modul-name {
-  font-size: 1.25rem;
-  font-weight: 600;
+h1 {
   margin: 0;
-  color: #2b6cb0;
-}
-
-.klassen-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.klasse-card {
-  background-color: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.5rem;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-  cursor: pointer;
-}
-
-.klasse-card:hover {
-  transform: translateY(-2px);
-  border-color: #cbd5e0;
-}
-
-.klasse-title {
+  font-size: 26px;
   font-weight: 600;
-  font-size: 1.1rem;
-  color: #2d3748;
-}
-
-.klasse-status {
-  font-size: 0.875rem;
-  color: #718096;
-}
-
-.klasse-status.active {
-  color: #2f855a;
-  font-weight: 500;
 }
 
 .btn {
+  height: 32px;
+  padding: 0 14px;
   font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 0.6rem 1.2rem;
+  font-size: 14px;
+  color: #12242e;
+  background-color: #ffffff;
+  border: 1px solid #b8c4cc;
   border-radius: 6px;
-  border: none;
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.1s ease;
 }
 
-.btn:active {
-  transform: scale(0.98);
+.btn:hover {
+  background-color: #0369a1;
 }
 
-.btn-primary {
-  background-color: #3182ce;
+.btn-blau {
   color: #ffffff;
+  background-color: #0369a1;
+  border-color: #0369a1;
 }
 
-.btn-primary:hover {
-  background-color: #2b6cb0;
+.btn-blau:hover {
+  background-color: #075985;
 }
 
-.btn-secondary {
-  background-color: #edf2f7;
-  color: #2d3748;
-  border: 1px solid #cbd5e0;
+.modul {
+  margin-bottom: 12px;
+  background-color: #ffffff;
+  border: 1px solid #dde5ea;
+  border-radius: 8px;
 }
 
-.btn-secondary:hover {
-  background-color: #e2e8f0;
+.modul-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.modul-code {
+  padding: 3px 10px;
+  font-weight: 600;
+  background-color: #f4f7f9;
+  border: 1px solid #dde5ea;
+  border-radius: 6px;
+}
+
+.modul-text {
+  color: #5a6b77;
+}
+
+.modul-button {
+  margin-left: auto;
+}
+
+.modul-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid #dde5ea;
+}
+
+.klasse {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #dde5ea;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.klasse:hover {
+  border-color: #0369a1;
+}
+
+.klasse-name {
+  font-weight: 600;
+}
+
+.klasse-status {
+  font-size: 13px;
+  color: #5a6b77;
+}
+
+.klasse-status.aktiv {
+  color: #16a34a;
+}
+
+.leer {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #5a6b77;
 }
 
 .neues-modul {
   width: 100%;
-  padding: 0.8rem;
-  border: 2px dashed #cbd5e0;
-  background-color: transparent;
-  color: #4a5568;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #5a6b77;
+  background: none;
+  border: 1px dashed #b8c4cc;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .neues-modul:hover {
-  border-color: #3182ce;
-  color: #3182ce;
-  background-color: #ebf8ff;
+  color: #0369a1;
+  border-color: #0369a1;
 }
 
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  background-color: rgba(18, 36, 46, 0.4);
 }
 
-.modal-content {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
+.modal {
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
+  margin: 0 16px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+.modal h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
 }
 
-.modal-content input[type="text"] {
+.modal input[type="text"] {
   width: 100%;
-  padding: 0.6rem;
-  font-size: 1rem;
-  border: 1px solid #cbd5e0;
+  height: 34px;
+  margin-bottom: 16px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  border: 1px solid #b8c4cc;
   border-radius: 6px;
-  margin-bottom: 1.5rem;
   box-sizing: border-box;
 }
 
-.checkbox-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.checkbox-item {
+.checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
+  gap: 8px;
+  margin-bottom: 10px;
   cursor: pointer;
 }
 
-.modal-actions {
+.modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .modul-text {
+    display: none;
+  }
 }
 </style>
