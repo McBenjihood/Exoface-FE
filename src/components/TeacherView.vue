@@ -8,39 +8,70 @@ const activeModul = ref<any>(null);
 
 const dbData = ref({
   User: [
-    { userId: 1, name: "Marc", surname: "Keller", email: "m.keller@schule.ch", role: "lehrer" },
-    { userId: 101, name: "Lukas", surname: "Weber", email: "l.weber@stud.schule.ch", role: "schueler", enabled: true, klassenId: 1 },
-    { userId: 102, name: "Anna", surname: "Fischer", email: "a.fischer@stud.schule.ch", role: "schueler", enabled: true, klassenId: 1 }
+    {
+      userId: 1,
+      name: "Marc",
+      surname: "Keller",
+      email: "m.keller@schule.ch",
+      role: "lehrer",
+    },
+    {
+      userId: 101,
+      name: "Lukas",
+      surname: "Weber",
+      email: "l.weber@stud.schule.ch",
+      role: "schueler",
+      enabled: true,
+      klassenId: 1,
+    },
+    {
+      userId: 102,
+      name: "Anna",
+      surname: "Fischer",
+      email: "a.fischer@stud.schule.ch",
+      role: "schueler",
+      enabled: true,
+      klassenId: 1,
+    },
   ],
   modules: [
-    { moduleID: 1, abbreviation: "M111", description: "Netzwerke und Serverinfrastruktur" },
-    { moduleID: 2, abbreviation: "M183", description: "Applikationssicherheit implementieren" }
+    {
+      moduleID: 1,
+      abbreviation: "M111",
+      description: "Netzwerke und Serverinfrastruktur",
+    },
+    {
+      moduleID: 2,
+      abbreviation: "M183",
+      description: "Applikationssicherheit implementieren",
+    },
   ],
-  class: [
-    { classID: 1, name: "D24a" }
-  ],
-  ClassModule: [
-    { moduleID: 1, classID: 1 }
-  ],
+  class: [{ classID: 1, name: "D24a" }],
+  ClassModule: [{ moduleID: 1, classID: 1 }],
   UserModul: [
     { moduleID: 1, userId: 1 },
-    { moduleID: 2, userId: 1 }
-  ]
+    { moduleID: 2, userId: 1 },
+  ],
 });
 onMounted(() => {
-  const payload = history.state?.importedPayload as Array<{
-    klasseName: string;
-    students: Array<{ name: string; surname: string; email: string }>;
-  }> | undefined;
+  const payload = history.state?.importedPayload as
+    | Array<{
+        klasseName: string;
+        students: Array<{ name: string; surname: string; email: string }>;
+      }>
+    | undefined;
 
   if (payload && Array.isArray(payload)) {
     payload.forEach((klasseData) => {
       let existingClass = dbData.value.class.find(
-          (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase()
+        (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase(),
       );
 
       if (!existingClass) {
-        existingClass = { classID: Date.now() + Math.random(), name: klasseData.klasseName };
+        existingClass = {
+          classID: Date.now() + Math.random(),
+          name: klasseData.klasseName,
+        };
         dbData.value.class.push(existingClass);
       }
 
@@ -55,7 +86,7 @@ onMounted(() => {
             email: s.email,
             role: "schueler",
             enabled: true,
-            klassenId: existingClass!.classID
+            klassenId: existingClass!.classID,
           });
         }
       });
@@ -65,40 +96,40 @@ onMounted(() => {
   }
 });
 const displayModules = computed(() => {
-  const teacherModuleIDs = dbData.value.UserModul
-      .filter((um) => um.userId === currentTeacherID.value)
-      .map((um) => um.moduleID);
+  const teacherModuleIDs = dbData.value.UserModul.filter(
+    (um) => um.userId === currentTeacherID.value,
+  ).map((um) => um.moduleID);
 
   return dbData.value.modules
-      .filter((m) => teacherModuleIDs.includes(m.moduleID))
-      .map((m) => {
-        const assignedClassIDs = dbData.value.ClassModule
-            .filter((cm) => cm.moduleID === m.moduleID)
-            .map((cm) => cm.classID);
+    .filter((m) => teacherModuleIDs.includes(m.moduleID))
+    .map((m) => {
+      const assignedClassIDs = dbData.value.ClassModule.filter(
+        (cm) => cm.moduleID === m.moduleID,
+      ).map((cm) => cm.classID);
 
-        const klassen = dbData.value.class
-            .filter((c) => assignedClassIDs.includes(c.classID))
-            .map((c) => {
-              const classStudents = dbData.value.User.filter(
-                  (u) => u.role === "schueler" && u.klassenId === c.classID
-              );
-              const activeCount = classStudents.filter((u) => u.enabled).length;
+      const klassen = dbData.value.class
+        .filter((c) => assignedClassIDs.includes(c.classID))
+        .map((c) => {
+          const classStudents = dbData.value.User.filter(
+            (u) => u.role === "schueler" && u.klassenId === c.classID,
+          );
+          const activeCount = classStudents.filter((u) => u.enabled).length;
 
-              return {
-                classID: c.classID,
-                title: c.name,
-                status: `${activeCount} / ${classStudents.length} aktiv`,
-                active: activeCount > 0
-              };
-            });
+          return {
+            classID: c.classID,
+            title: c.name,
+            status: `${activeCount} / ${classStudents.length} aktiv`,
+            active: activeCount > 0,
+          };
+        });
 
-        return {
-          moduleID: m.moduleID,
-          name: m.abbreviation,
-          description: m.description,
-          klassen
-        };
-      });
+      return {
+        moduleID: m.moduleID,
+        name: m.abbreviation,
+        description: m.description,
+        klassen,
+      };
+    });
 });
 
 const showModal = ref(false);
@@ -121,11 +152,11 @@ function addModul() {
     dbData.value.modules.push({
       moduleID: newModuleID,
       abbreviation: newModulName.value.trim(),
-      description: "Neues Modul"
+      description: "Neues Modul",
     });
     dbData.value.UserModul.push({
       moduleID: newModuleID,
-      userId: currentTeacherID.value
+      userId: currentTeacherID.value,
     });
     closeModal();
   }
@@ -133,9 +164,9 @@ function addModul() {
 
 function openClassSelectModal(modul: any) {
   activeModul.value = modul;
-  selectedClassIDs.value = dbData.value.ClassModule
-      .filter((cm) => cm.moduleID === modul.moduleID)
-      .map((cm) => cm.classID);
+  selectedClassIDs.value = dbData.value.ClassModule.filter(
+    (cm) => cm.moduleID === modul.moduleID,
+  ).map((cm) => cm.classID);
 
   showClassSelectModal.value = true;
 }
@@ -150,13 +181,13 @@ function saveClassSelection() {
   const currentModuleID = activeModul.value.moduleID;
 
   dbData.value.ClassModule = dbData.value.ClassModule.filter(
-      (cm) => cm.moduleID !== currentModuleID
+    (cm) => cm.moduleID !== currentModuleID,
   );
 
   selectedClassIDs.value.forEach((classID) => {
     dbData.value.ClassModule.push({
       moduleID: currentModuleID,
-      classID: classID
+      classID: classID,
     });
   });
 
@@ -164,11 +195,11 @@ function saveClassSelection() {
 }
 
 function pushtoclassview(modulName: string, klasseTitle: string) {
-  router.push(`/teacherclassview/${modulName}/${klasseTitle}`);
+  router.push(`/class/${modulName}/${klasseTitle}`);
 }
 
 function goToCsvImport() {
-  router.push('/csv');
+  router.push("/csv");
 }
 </script>
 
@@ -176,7 +207,7 @@ function goToCsvImport() {
   <main class="dashboard">
     <div class="header-top">
       <h1 class="page-title">
-        Hallo {{ dbData.User.find(u => u.userId === currentTeacherID)?.name }}
+        Hallo {{ dbData.User.find((u) => u.userId === currentTeacherID)?.name }}
       </h1>
       <button @click="goToCsvImport" class="btn btn-secondary">
         📁 CSV importieren
@@ -184,9 +215,9 @@ function goToCsvImport() {
     </div>
 
     <div
-        v-for="modul in displayModules"
-        :key="modul.moduleID"
-        class="modul-box-large"
+      v-for="modul in displayModules"
+      :key="modul.moduleID"
+      class="modul-box-large"
     >
       <div class="modul-header">
         <h2 class="modul-name">{{ modul.name }} - {{ modul.description }}</h2>
@@ -197,10 +228,10 @@ function goToCsvImport() {
 
       <div class="klassen-container">
         <div
-            v-for="klasse in modul.klassen"
-            :key="klasse.classID"
-            class="klasse-card"
-            @click="pushtoclassview(modul.name, klasse.title)"
+          v-for="klasse in modul.klassen"
+          :key="klasse.classID"
+          class="klasse-card"
+          @click="pushtoclassview(modul.name, klasse.title)"
         >
           <span class="klasse-title">{{ klasse.title }}</span>
           <span class="klasse-status" :class="{ active: klasse.active }">
@@ -217,23 +248,23 @@ function goToCsvImport() {
 
     <!-- Modal: Klassen für Modul auswählen -->
     <div
-        v-if="showClassSelectModal"
-        class="modal-overlay"
-        @click.self="closeClassSelectModal"
+      v-if="showClassSelectModal"
+      class="modal-overlay"
+      @click.self="closeClassSelectModal"
     >
       <div class="modal-content">
         <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
 
         <div class="checkbox-list">
           <label
-              v-for="c in dbData.class"
-              :key="c.classID"
-              class="checkbox-item"
+            v-for="c in dbData.class"
+            :key="c.classID"
+            class="checkbox-item"
           >
             <input
-                type="checkbox"
-                :value="c.classID"
-                v-model="selectedClassIDs"
+              type="checkbox"
+              :value="c.classID"
+              v-model="selectedClassIDs"
             />
             <span>Klasse {{ c.name }}</span>
           </label>
@@ -255,11 +286,11 @@ function goToCsvImport() {
       <div class="modal-content">
         <h3>Neues Modul erstellen</h3>
         <input
-            v-model="newModulName"
-            type="text"
-            placeholder="M123..."
-            @keyup.enter="addModul"
-            autofocus
+          v-model="newModulName"
+          type="text"
+          placeholder="M123..."
+          @keyup.enter="addModul"
+          autofocus
         />
         <div class="modal-actions">
           <button @click="closeModal" class="btn btn-secondary">
@@ -278,8 +309,8 @@ function goToCsvImport() {
   margin: 0 auto;
   padding: 2rem 1.5rem;
   font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-      sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   color: #2d3748;
 }
 
@@ -302,8 +333,8 @@ function goToCsvImport() {
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #e2e8f0;
   margin-bottom: 1.5rem;
 }
@@ -339,6 +370,9 @@ function goToCsvImport() {
   flex-direction: column;
   justify-content: space-between;
   gap: 0.5rem;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
   cursor: pointer;
 }
 
@@ -372,8 +406,8 @@ function goToCsvImport() {
   border: none;
   cursor: pointer;
   transition:
-      background-color 0.2s ease,
-      transform 0.1s ease;
+    background-color 0.2s ease,
+    transform 0.1s ease;
 }
 
 .btn:active {
@@ -432,7 +466,6 @@ function goToCsvImport() {
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
-
 }
 
 .modal-content h3 {

@@ -13,6 +13,7 @@ const routes = [
     path: "/csv",
     name: "csv",
     component: () => import("./components/CSV.vue"),
+    meta: { role: "teacher" },
   },
   {
     path: "/resetpassword",
@@ -20,10 +21,11 @@ const routes = [
     meta: { open: true },
   },
   {
-    path: "/teacherclassview/:modulName/:klassenTitle",
-    name: "teacherclassview",
+    path: "/class/:modulName/:klassenTitle",
+    name: "classview",
     component: () => import("./components/TeacherClassView.vue"),
     props: true,
+    meta: { role: "teacher" },
   },
   {
     path: "/vm/:vmID",
@@ -44,7 +46,7 @@ router.beforeEach((to) => {
   const user = getUser();
   if (!user) return "/login";
 
-  if (to.meta.role && to.meta.role !== user.role) return "/dashboard";
+  if (to.meta.role && to.meta.role !== user.role) return "/overview";
 });
 
 export default router;
