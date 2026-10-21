@@ -82,7 +82,7 @@ function handleDelete(id: number) {
   students.value = students.value.filter((s) => s.id !== id);
 }
 function backtolast() {
-  router.push("/teacherview");
+  router.push("/overview");
 }
 function uploadcsv() {
   router.push({
@@ -94,15 +94,8 @@ function uploadcsv() {
   });
 }
 
-function goToVM(studentName: string) {
-  router.push({
-    name: "teachervmdashboard",
-    params: {
-      modulName: props.modulName,
-      klassenTitle: props.klassenTitle,
-      student: studentName,
-    },
-  });
+function goToVM(vmID: number) {
+  router.push({ name: "vm", params: { vmID } });
 }
 </script>
 
@@ -168,7 +161,11 @@ function goToVM(studentName: string) {
             </div>
           </div>
 
-          <div v-if="student.expanded" class="student-details">
+          <div
+            v-if="student.expanded"
+            class="student-details clickable-details"
+            @click="goToVM(student.id)"
+          >
             <div class="info-content">
               <div class="info-group">
                 <span class="info-label">Name</span>
@@ -196,7 +193,7 @@ function goToVM(studentName: string) {
               </div>
             </div>
 
-            <div class="action-buttons">
+            <div class="action-buttons" @click.stop>
               <button class="btn btn-action" @click="handleStartStop(student)">
                 {{ student.status === "active" ? "Stop" : "Start" }}
               </button>
