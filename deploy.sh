@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 cd "$(dirname "$0")"
 
@@ -8,7 +7,7 @@ TARGET_DIR="../build"
 npm install
 npm run build
 
-rm -rf "${TARGET_DIR:?}"/*
+rm -rf "${TARGET_DIR}"/*
 mkdir -p "$TARGET_DIR"
 mv dist/* "$TARGET_DIR"/
 rmdir dist
