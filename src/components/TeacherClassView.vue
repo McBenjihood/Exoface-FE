@@ -5,6 +5,7 @@ import router from "../router.ts";
 const props = defineProps<{
   modulName: string;
   klassenTitle: string;
+  klassenid: number;
 }>();
 
 interface Student {
@@ -18,53 +19,6 @@ interface Student {
   status: "active" | "inactive";
   expanded: boolean;
 }
-
-const students = ref<Student[]>([
-  {
-    id: 1,
-    name: "Schüler 1",
-    ip: "178.162.00.01:2000",
-    uptime: "2h 17min",
-    cpu: "50 / 100%",
-    ram: "5 GB / 16 GB",
-    storage: "50 GB / 100 GB",
-    status: "active",
-    expanded: false,
-  },
-  {
-    id: 2,
-    name: "Schüler 2",
-    ip: "178.162.00.02:2000",
-    uptime: "1h 05min",
-    cpu: "20 / 100%",
-    ram: "4 GB / 16 GB",
-    storage: "30 GB / 100 GB",
-    status: "active",
-    expanded: false,
-  },
-  {
-    id: 3,
-    name: "Schüler 3",
-    ip: "178.162.00.03:2000",
-    uptime: "0h 45min",
-    cpu: "10 / 100%",
-    ram: "2 GB / 16 GB",
-    storage: "20 GB / 100 GB",
-    status: "inactive",
-    expanded: false,
-  },
-  {
-    id: 4,
-    name: "Max Muster",
-    ip: "178.162.00.01:2000",
-    uptime: "2h 17min",
-    cpu: "50 / 100%",
-    ram: "5 GB / 16 GB",
-    storage: "50 GB / 100 GB",
-    status: "active",
-    expanded: true,
-  },
-]);
 
 function toggleExpand(student: Student) {
   student.expanded = !student.expanded;
@@ -82,17 +36,10 @@ function handleDelete(id: number) {
   students.value = students.value.filter((s) => s.id !== id);
 }
 function backtolast() {
-  router.push("/teacherview");
+  router.push("/overview");
 }
-function uploadcsv() {
-  router.push({
-    path: "/csv",
-    state: {
-      modulName: props.modulName,
-      klassenTitle: props.klassenTitle,
-    },
-  });
-}
+
+
 
 function goToVM(studentName: string) {
   router.push({
@@ -130,9 +77,6 @@ function goToVM(studentName: string) {
         <div class="header-tags">
           <span class="badge badge-outline">{{ klassenTitle }}</span>
           <span class="module-title">{{ modulName }}</span>
-          <button @click="uploadcsv" class="icon-btn-upload-btn">
-            upload CSV
-          </button>
         </div>
       </div>
 

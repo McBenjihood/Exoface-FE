@@ -27,39 +27,43 @@ const dbData = ref({
     { moduleID: 2, userId: 1 }
   ]
 });
-
 onMounted(() => {
-  const payload = history.state?.importedPayload as {
+  const payload = history.state?.importedPayload as Array<{
     klasseName: string;
     students: Array<{ name: string; surname: string; email: string }>;
-  } | undefined;
+  }> | undefined;
 
-  if (payload && payload.klasseName) {
-    let existingClass = dbData.value.class.find(
-        (c) => c.name.toLowerCase() === payload.klasseName.toLowerCase()
-    );
+  if (payload && Array.isArray(payload)) {
+    payload.forEach((klasseData) => {
+      let existingClass = dbData.value.class.find(
+          (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase()
+      );
 
-    if (!existingClass) {
-      existingClass = { classID: Date.now(), name: payload.klasseName };
-      dbData.value.class.push(existingClass);
-    }
+      if (!existingClass) {
+        existingClass = { classID: Date.now() + Math.random(), name: klasseData.klasseName };
+        dbData.value.class.push(existingClass);
+      }
 
-    payload.students.forEach((s, index) => {
-      dbData.value.User.push({
-        userId: Date.now() + index,
-        name: s.name,
-        surname: s.surname,
-        email: s.email || `${s.name.toLowerCase()}.${s.surname.toLowerCase()}@stud.schule.ch`,
-        role: "schueler",
-        enabled: true,
-        klassenId: existingClass!.classID
+      klasseData.students.forEach((s, index) => {
+        const userExists = dbData.value.User.some((u) => u.email === s.email);
+
+        if (!userExists) {
+          dbData.value.User.push({
+            userId: Date.now() + index + Math.random(),
+            name: s.name,
+            surname: s.surname,
+            email: s.email,
+            role: "schueler",
+            enabled: true,
+            klassenId: existingClass!.classID
+          });
+        }
       });
     });
 
-    console.log("Neue Klasse & Schüler aus CSV importiert:", payload);
+    window.history.replaceState({}, document.title);
   }
 });
-
 const displayModules = computed(() => {
   const teacherModuleIDs = dbData.value.UserModul
       .filter((um) => um.userId === currentTeacherID.value)
@@ -335,15 +339,11 @@ function goToCsvImport() {
   flex-direction: column;
   justify-content: space-between;
   gap: 0.5rem;
-  transition:
-      transform 0.15s ease,
-      box-shadow 0.15s ease;
   cursor: pointer;
 }
 
 .klasse-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border-color: #cbd5e0;
 }
 
@@ -432,7 +432,7 @@ function goToCsvImport() {
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
 }
 
 .modal-content h3 {
