@@ -171,15 +171,15 @@ function uploadcsv() {
 
               <div class="metrics-row">
                 <div class="metric-item">
-                  <span class="metric-icon">💻</span>
+                  <span class="metric-icon"></span>
                   <span>{{ student.cpu }}</span>
                 </div>
                 <div class="metric-item">
-                  <span class="metric-icon">📊</span>
+                  <span class="metric-icon"></span>
                   <span>{{ student.ram }}</span>
                 </div>
                 <div class="metric-item">
-                  <span class="metric-icon">💾</span>
+                  <span class="metric-icon"></span>
                   <span>{{ student.storage }}</span>
                 </div>
               </div>

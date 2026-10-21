@@ -28,7 +28,6 @@ const dbData = ref({
   ]
 });
 
-// Nimmt die importierten Daten aus dem Router-State entgegen
 onMounted(() => {
   const payload = history.state?.importedPayload as {
     klasseName: string;
@@ -98,7 +97,6 @@ const displayModules = computed(() => {
       });
 });
 
-// Modals Steuerung
 const showModal = ref(false);
 const showClassSelectModal = ref(false);
 const newModulName = ref("");
