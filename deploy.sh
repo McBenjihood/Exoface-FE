@@ -2,14 +2,14 @@
 
 cd "$(dirname "$0")"
 
-TARGET_DIR="../build"
+TARGET_DIR="/var/www/vhosts/exoface.bbzwinf.ch/httpdocs/build"
 
 npm install
 npm run build
 
-rm -rf "${TARGET_DIR}"/*
+rm -rf "${TARGET_DIR}"
 mkdir "$TARGET_DIR"
 mv dist/* "$TARGET_DIR"/
-rmdir dist
+rm -rf dist
 
 echo "Deployment finished"
