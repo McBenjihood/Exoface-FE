@@ -20,3 +20,23 @@ export async function login(email: string, passwort: string): Promise<User> {
   }
   return user;
 }
+
+export async function sendResetCode(email: string) {
+    const user = mockUsers.find(
+        (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
+    );
+    if (!user) {
+        throw new Error("Zu dieser E-Mail gibt es kein Konto");
+    }
+}
+
+export async function checkResetCode(email: string, otp: string) {
+    console.log("Code prüfen für", email);
+    if (otp !== "123456") {
+        throw new Error("Der Code ist falsch");
+    }
+}
+
+export async function setNewPassword(email: string, passwort: string) {
+    console.log("Neues Passwort gesetzt für", email, "mit", passwort.length, "Zeichen");
+}
