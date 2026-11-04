@@ -109,6 +109,6 @@ function handleLogout() {
 }
 
 .menu a:hover {
-  background: #5a6b77;
+  background: #f8f5f5;
 }
 </style>
