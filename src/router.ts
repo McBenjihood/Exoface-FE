@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "./components/LoginView.vue";
 import ResetPasswordView from "./components/ResetPasswordView.vue";
-import TeacherVMDashboard from "./components/TeacherVMDashboard.vue";
+import VmView from "./components/VmView.vue";
 import { getUser } from "./auth.ts";
 import OverviewView from "./components/OverviewView.vue";
 
@@ -23,14 +23,14 @@ const routes = [
   {
     path: "/class/:modulName/:klassenTitle",
     name: "classview",
-    component: () => import("./components/TeacherClassView.vue"),
+    component: () => import("./components/ClassView.vue"),
     props: true,
     meta: { role: "teacher" },
   },
   {
     path: "/vm/:vmID",
     name: "vm",
-    component: TeacherVMDashboard,
+    component: VmView,
     props: true,
   },
 ];
