@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { vms } from "../mockData";
+import { laufendeVms } from "../vmValues";
 
 const router = useRouter();
 const currentTeacherID = ref(1);
@@ -55,16 +57,16 @@ const dbData = ref({
 });
 onMounted(() => {
   const payload = history.state?.importedPayload as
-    | Array<{
-        klasseName: string;
-        students: Array<{ name: string; surname: string; email: string }>;
-      }>
-    | undefined;
+      | Array<{
+    klasseName: string;
+    students: Array<{ name: string; surname: string; email: string }>;
+  }>
+      | undefined;
 
   if (payload && Array.isArray(payload)) {
     payload.forEach((klasseData) => {
       let existingClass = dbData.value.class.find(
-        (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase(),
+          (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase(),
       );
 
       if (!existingClass) {
@@ -97,53 +99,51 @@ onMounted(() => {
 });
 const displayModules = computed(() => {
   const teacherModuleIDs = dbData.value.UserModul.filter(
-    (um) => um.userId === currentTeacherID.value,
+      (um) => um.userId === currentTeacherID.value,
   ).map((um) => um.moduleID);
 
   return dbData.value.modules
-    .filter((m) => teacherModuleIDs.includes(m.moduleID))
-    .map((m) => {
-      const assignedClassIDs = dbData.value.ClassModule.filter(
-        (cm) => cm.moduleID === m.moduleID,
-      ).map((cm) => cm.classID);
+      .filter((m) => teacherModuleIDs.includes(m.moduleID))
+      .map((m) => {
+        const assignedClassIDs = dbData.value.ClassModule.filter(
+            (cm) => cm.moduleID === m.moduleID,
+        ).map((cm) => cm.classID);
 
-      const klassen = dbData.value.class
-        .filter((c) => assignedClassIDs.includes(c.classID))
-        .map((c) => {
-          const classStudents = dbData.value.User.filter(
-            (u) => u.role === "schueler" && u.klassenId === c.classID,
-          );
-          const activeCount = classStudents.filter((u) => u.enabled).length;
+        const klassen = dbData.value.class
+            .filter((c) => assignedClassIDs.includes(c.classID))
+            .map((c) => {
+              const modulVms = vms.filter((v) => v.moduleID === m.moduleID);
+              const laufend = laufendeVms(modulVms);
 
-          return {
-            classID: c.classID,
-            title: c.name,
-            status: `${activeCount} / ${classStudents.length} aktiv`,
-            active: activeCount > 0,
-          };
-        });
+              return {
+                classID: c.classID,
+                title: c.name,
+                status: `${laufend} von ${modulVms.length} VMs laufen`,
+                active: laufend > 0,
+              };
+            });
 
-      return {
-        moduleID: m.moduleID,
-        name: m.abbreviation,
-        description: m.description,
-        klassen,
-      };
-    });
+        return {
+          moduleID: m.moduleID,
+          name: m.abbreviation,
+          description: m.description,
+          klassen,
+        };
+      });
 });
 
-const showModal = ref(false);
-const showClassSelectModal = ref(false);
+const modulDialog = ref<HTMLDialogElement | null>(null);
+const klassenDialog = ref<HTMLDialogElement | null>(null);
 const newModulName = ref("");
 const selectedClassIDs = ref<number[]>([]);
 
 function openModal() {
   newModulName.value = "";
-  showModal.value = true;
+  modulDialog.value?.showModal();
 }
 
 function closeModal() {
-  showModal.value = false;
+  modulDialog.value?.close();
 }
 
 function addModul() {
@@ -165,14 +165,14 @@ function addModul() {
 function openClassSelectModal(modul: any) {
   activeModul.value = modul;
   selectedClassIDs.value = dbData.value.ClassModule.filter(
-    (cm) => cm.moduleID === modul.moduleID,
+      (cm) => cm.moduleID === modul.moduleID,
   ).map((cm) => cm.classID);
 
-  showClassSelectModal.value = true;
+  klassenDialog.value?.showModal();
 }
 
 function closeClassSelectModal() {
-  showClassSelectModal.value = false;
+  klassenDialog.value?.close();
 }
 
 function saveClassSelection() {
@@ -181,7 +181,7 @@ function saveClassSelection() {
   const currentModuleID = activeModul.value.moduleID;
 
   dbData.value.ClassModule = dbData.value.ClassModule.filter(
-    (cm) => cm.moduleID !== currentModuleID,
+      (cm) => cm.moduleID !== currentModuleID,
   );
 
   selectedClassIDs.value.forEach((classID) => {
@@ -192,10 +192,6 @@ function saveClassSelection() {
   });
 
   closeClassSelectModal();
-}
-
-function pushtoclassview(modulName: string, klasseTitle: string) {
-  router.push(`/class/${modulName}/${klasseTitle}`);
 }
 
 function goToCsvImport() {
@@ -213,33 +209,46 @@ function goToCsvImport() {
     </div>
 
     <section
-      v-for="modul in displayModules"
-      :key="modul.moduleID"
-      class="modul"
+        v-for="modul in displayModules"
+        :key="modul.moduleID"
+        class="modul"
     >
       <div class="modul-head">
         <span class="modul-code">{{ modul.name }}</span>
         <span class="modul-text">{{ modul.description }}</span>
         <button
-          @click="openClassSelectModal(modul)"
-          class="btn btn-blau modul-button"
+            @click="openClassSelectModal(modul)"
+            class="btn btn-blau modul-button"
         >
           Klassen zuordnen
         </button>
       </div>
 
       <div class="modul-body">
-        <div
-          v-for="klasse in modul.klassen"
-          :key="klasse.classID"
-          class="klasse"
-          @click="pushtoclassview(modul.name, klasse.title)"
+        <router-link
+            v-for="klasse in modul.klassen"
+            :key="klasse.classID"
+            :to="`/class/${modul.name}/${klasse.title}`"
+            class="klasse"
         >
-          <span class="klasse-name">{{ klasse.title }}</span>
-          <span class="klasse-status" :class="{ aktiv: klasse.active }">
-            {{ klasse.status }}
-          </span>
-        </div>
+          <div>
+            <div class="klasse-name">{{ klasse.title }}</div>
+            <div class="klasse-status" :class="{ aktiv: klasse.active }">
+              {{ klasse.status }}
+            </div>
+          </div>
+          <svg
+              class="pfeil"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </router-link>
 
         <p v-if="modul.klassen.length === 0" class="leer">
           Diesem Modul ist noch keine Klasse zugeordnet.
@@ -251,48 +260,35 @@ function goToCsvImport() {
       + Neues Modul erstellen
     </button>
 
-    <div
-      v-if="showClassSelectModal"
-      class="modal-overlay"
-      @click.self="closeClassSelectModal"
-    >
-      <div class="modal">
-        <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
+    <dialog ref="klassenDialog" class="dialog">
+      <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
 
-        <label v-for="c in dbData.class" :key="c.classID" class="checkbox">
-          <input
-            type="checkbox"
-            :value="c.classID"
-            v-model="selectedClassIDs"
-          />
-          Klasse {{ c.name }}
-        </label>
+      <label v-for="c in dbData.class" :key="c.classID" class="checkbox">
+        <input type="checkbox" :value="c.classID" v-model="selectedClassIDs" />
+        Klasse {{ c.name }}
+      </label>
 
-        <div class="modal-buttons">
-          <button @click="closeClassSelectModal" class="btn">Abbrechen</button>
-          <button @click="saveClassSelection" class="btn btn-blau">
-            Speichern
-          </button>
-        </div>
+      <div class="dialog-buttons">
+        <button @click="closeClassSelectModal" class="btn">Abbrechen</button>
+        <button @click="saveClassSelection" class="btn btn-blau">
+          Speichern
+        </button>
       </div>
-    </div>
+    </dialog>
 
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <h3>Neues Modul erstellen</h3>
-        <input
+    <dialog ref="modulDialog" class="dialog">
+      <h3>Neues Modul erstellen</h3>
+      <input
           v-model="newModulName"
           type="text"
           placeholder="M123..."
           @keyup.enter="addModul"
-          autofocus
-        />
-        <div class="modal-buttons">
-          <button @click="closeModal" class="btn">Abbrechen</button>
-          <button @click="addModul" class="btn btn-blau">Erstellen</button>
-        </div>
+      />
+      <div class="dialog-buttons">
+        <button @click="closeModal" class="btn">Abbrechen</button>
+        <button @click="addModul" class="btn btn-blau">Erstellen</button>
       </div>
-    </div>
+    </dialog>
   </main>
 </template>
 
@@ -376,7 +372,7 @@ h1 {
 
 .modul-body {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   padding: 16px;
   border-top: 1px solid var(--border);
@@ -387,13 +383,18 @@ h1 {
   justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
+  color: inherit;
+  text-decoration: none;
   border: 1px solid var(--border);
   border-radius: 6px;
-  cursor: pointer;
 }
 
 .klasse:hover {
   border-color: var(--primary);
+}
+
+.klasse:hover .pfeil {
+  color: var(--primary);
 }
 
 .klasse-name {
@@ -401,12 +402,17 @@ h1 {
 }
 
 .klasse-status {
+  margin-top: 2px;
   font-size: 13px;
   color: var(--text-muted);
 }
 
 .klasse-status.aktiv {
   color: var(--success);
+}
+
+.pfeil {
+  color: var(--text-muted);
 }
 
 .leer {
@@ -432,36 +438,29 @@ h1 {
   border-color: var(--primary);
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+.dialog {
   width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  max-width: 360px;
+  padding: 20px;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.dialog::backdrop {
   background-color: var(--overlay);
 }
 
-.modal {
-  width: 100%;
-  max-width: 360px;
-  margin: 0 16px;
-  padding: 20px;
-  background-color: var(--surface);
-  border-radius: 8px;
-}
-
-.modal h3 {
+.dialog h3 {
   margin: 0 0 16px;
   font-size: 18px;
 }
 
-.modal input[type="text"] {
+.dialog input[type="text"] {
   width: 100%;
   height: 34px;
-  margin-bottom: 16px;
   padding: 0 10px;
   font-family: inherit;
   font-size: 14px;
@@ -480,7 +479,7 @@ h1 {
   cursor: pointer;
 }
 
-.modal-buttons {
+.dialog-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -491,5 +490,11 @@ h1 {
   .modul-text {
     display: none;
   }
+
+  .modul-body {
+    grid-template-columns: 1fr;
+  }
+
+
 }
 </style>

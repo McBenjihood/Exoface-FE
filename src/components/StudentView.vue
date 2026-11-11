@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
 import { getUser } from "../auth";
-import { vms, type Vm } from "../mockData";
-
-const router = useRouter();
+import { vms } from "../mockData";
+import { laufendeVms } from "../vmValues";
+import VmCard from "./VmCard.vue";
 
 const user = getUser();
 
@@ -43,132 +42,84 @@ const dbData = ref({
   ],
 });
 
-const openModules = ref<number[]>([1]);
-
 const currentStudent = computed(() =>
-  dbData.value.Students.find((s) => s.email === user?.email),
+    dbData.value.Students.find((s) => s.email === user?.email),
 );
 
 const displayModules = computed(() => {
   if (!currentStudent.value) return [];
 
   const classModuleIDs = dbData.value.ClassModule.filter(
-    (cm) => cm.classID === currentStudent.value?.classID,
+      (cm) => cm.classID === currentStudent.value?.classID,
   ).map((cm) => cm.moduleID);
 
   return dbData.value.modules
-    .filter((m) => classModuleIDs.includes(m.moduleID))
-    .map((m) => {
-      const moduleVms = vms.filter(
-        (v) =>
-          v.moduleID === m.moduleID &&
-          v.studentID === currentStudent.value?.studentID,
-      );
+      .filter((m) => classModuleIDs.includes(m.moduleID))
+      .map((m) => {
+        const moduleVms = vms.filter(
+            (v) =>
+                v.moduleID === m.moduleID &&
+                v.studentID === currentStudent.value?.studentID,
+        );
 
-      return {
-        moduleID: m.moduleID,
-        name: m.abbreviation,
-        description: m.description,
-        moduleVms,
-      };
-    });
+        return {
+          moduleID: m.moduleID,
+          name: m.abbreviation,
+          description: m.description,
+          moduleVms,
+        };
+      });
 });
 
-function toggleModul(moduleID: number) {
-  if (openModules.value.includes(moduleID)) {
-    openModules.value = openModules.value.filter((id) => id !== moduleID);
-  } else {
-    openModules.value.push(moduleID);
-  }
-}
-
-function startStopVM(vm: Vm) {
-  vm.status = vm.status === "active" ? "inactive" : "active";
-}
-
-function resetVM(vm: Vm) {
-  console.log("Reset:", vm.name);
-}
-
-function pushtovmview(vmID: number) {
-  router
-    .push({
-      name: "vm",
-      params: {
-        vmID: vmID,
-      },
-    })
-    .catch((err) => {
-      console.error("Router-Fehler:", err);
-    });
-}
+const meineVms = computed(() =>
+    vms.filter((v) => v.studentID === currentStudent.value?.studentID),
+);
 </script>
 
 <template>
   <main class="page">
     <h1>Hallo {{ user?.name }}</h1>
+    <p class="untertitel">
+      {{ laufendeVms(meineVms) }} von {{ meineVms.length }} VMs laufen gerade.
+    </p>
 
-    <section
-      v-for="modul in displayModules"
-      :key="modul.moduleID"
-      class="modul"
+    <details
+        v-for="(modul, index) in displayModules"
+        :key="modul.moduleID"
+        class="modul"
+        :open="index === 0"
     >
-      <div class="modul-head" @click="toggleModul(modul.moduleID)">
+      <summary class="modul-head">
         <span class="modul-code">{{ modul.name }}</span>
         <span class="modul-text">{{ modul.description }}</span>
-        <span
-          class="pfeil"
-          :class="{ offen: openModules.includes(modul.moduleID) }"
-        >
-          <svg
+        <span class="zaehler">
+          <template v-if="modul.moduleVms.length === 0">keine VM</template>
+          <template v-else>
+            {{ laufendeVms(modul.moduleVms) }} von
+            {{ modul.moduleVms.length }} laufen
+          </template>
+        </span>
+        <svg
+            class="pfeil"
             width="18"
             height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </span>
-      </div>
-
-      <div v-if="openModules.includes(modul.moduleID)" class="modul-body">
-        <div
-          v-for="vm in modul.moduleVms"
-          :key="vm.vmID"
-          class="vm"
-          @click="pushtovmview(vm.vmID)"
         >
-          <div class="vm-info">
-            <div class="vm-name">
-              {{ vm.name }}
-              <span class="status" :class="vm.status">
-                {{ vm.status === "active" ? "läuft" : "gestoppt" }}
-              </span>
-            </div>
-            <div class="vm-text">{{ vm.ip }}</div>
-            <div class="vm-text">Uptime: {{ vm.uptime }}</div>
-            <div class="werte">
-              <span><span class="wert-name">CPU</span> {{ vm.cpu }}</span>
-              <span><span class="wert-name">RAM</span> {{ vm.ram }}</span>
-              <span><span class="wert-name">Disk</span> {{ vm.storage }}</span>
-            </div>
-          </div>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
 
-          <div class="vm-buttons" @click.stop>
-            <button @click="startStopVM(vm)">
-              {{ vm.status === "active" ? "Stoppen" : "Starten" }}
-            </button>
-            <button @click="resetVM(vm)">Zurücksetzen</button>
-          </div>
-        </div>
+      <div class="modul-body">
+        <VmCard v-for="vm in modul.moduleVms" :key="vm.vmID" :vm="vm" />
 
         <p v-if="modul.moduleVms.length === 0" class="leer">
           Die Lehrperson hat für dieses Modul noch keine VM erstellt.
         </p>
       </div>
-    </section>
+    </details>
 
     <p v-if="displayModules.length === 0" class="leer">
       Du bist noch in keinem Modul eingetragen.
@@ -184,9 +135,14 @@ function pushtovmview(vmID: number) {
 }
 
 h1 {
-  margin: 0 0 24px;
+  margin: 0;
   font-size: 26px;
   font-weight: 600;
+}
+
+.untertitel {
+  margin: 6px 0 24px;
+  color: var(--text-muted);
 }
 
 .modul {
@@ -203,6 +159,11 @@ h1 {
   padding: 14px 16px;
   cursor: pointer;
   user-select: none;
+  list-style: none;
+}
+
+.modul-head::-webkit-details-marker {
+  display: none;
 }
 
 .modul-code {
@@ -217,14 +178,17 @@ h1 {
   color: var(--text-muted);
 }
 
-.pfeil {
-  display: flex;
+.zaehler {
   margin-left: auto;
+  font-size: 13px;
   color: var(--text-muted);
-  transition: transform 0.15s;
 }
 
-.pfeil.offen {
+.pfeil {
+  color: var(--text-muted);
+}
+
+.modul[open] .pfeil {
   transform: rotate(180deg);
 }
 
@@ -236,102 +200,36 @@ h1 {
   border-top: 1px solid var(--border);
 }
 
-.vm {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.vm:hover {
-  border-color: var(--primary);
-}
-
-.vm-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.vm-name {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 2px;
-  font-weight: 600;
-}
-
-.status {
-  font-size: 12px;
-  font-weight: normal;
-}
-
-.status.active {
-  color: var(--success);
-}
-
-.status.inactive {
-  color: var(--danger);
-}
-.vm-text {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.werte {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: 6px;
-  font-size: 14px;
-}
-
-.wert-name {
-  color: var(--text-muted);
-}
-
-.vm-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.vm-buttons button {
-  min-width: 120px;
-  height: 32px;
-  padding: 0 12px;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--text);
-  background-color: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.vm-buttons button:hover {
-  background-color: var(--surface-2);
-}
-
 .leer {
   margin: 0;
   color: var(--text-muted);
 }
 
 @media (max-width: 600px) {
-  .vm {
-    flex-direction: column;
-  }
-
-  .vm-buttons {
-    flex-direction: row;
-  }
-
   .modul-text {
     display: none;
+  }
+}
+
+.modul {
+  interpolate-size: allow-keywords;
+}
+
+.modul::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+      block-size 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+}
+
+.modul[open]::details-content {
+  block-size: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modul::details-content {
+    transition: none;
   }
 }
 </style>
