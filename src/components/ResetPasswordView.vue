@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { sendResetCode, checkResetCode, setNewPassword } from "../api";
+import { sendResetCode, setNewPassword } from "../api";
 
 const router = useRouter();
 
@@ -26,35 +26,31 @@ async function handleSendCode() {
   }
 }
 
-async function handleCheckCode() {
-  error.value = "";
-  try {
-    await checkResetCode(email.value, otp.value);
-    step.value = 3;
-  } catch (e) {
-    error.value = (e as Error).message;
-  }
-}
-
 async function handleSetPassword() {
   error.value = "";
-  if (passwort.value.length < 8) {
-    error.value = "Das Passwort muss mindestens 8 Zeichen lang sein";
+  if (otp.value.length !== 6) {
+    error.value = "Bitte gib den 6-stelligen Code ein";
+    return;
+  }
+  if (passwort.value.length < 8 || passwort.value.length > 128) {
+    error.value = "Das Passwort muss zwischen 8 und 128 Zeichen lang sein";
     return;
   }
   if (passwort.value !== passwortConfirm.value) {
     error.value = "Die Passwörter stimmen nicht überein";
     return;
   }
-  await setNewPassword(email.value, passwort.value);
-  router.push("/login");
+  try {
+    await setNewPassword(email.value, otp.value, passwort.value);
+    router.push("/login");
+  } catch (e) {
+    error.value = (e as Error).message;
+  }
 }
 
 function handleSubmit() {
   if (step.value === 1) {
     handleSendCode();
-  } else if (step.value === 2) {
-    handleCheckCode();
   } else {
     handleSetPassword();
   }
@@ -71,9 +67,9 @@ function handleSubmit() {
         Gib deine E-Mail ein. Wir schicken dir einen Code.
       </p>
       <p v-if="step === 2" class="notice">
-        Wir haben dir einen Code an {{ email }} geschickt.
+        Wir haben dir einen Code an {{ email }} geschickt. Gib ihn ein und
+        wähle ein neues Passwort.
       </p>
-      <p v-if="step === 3" class="notice">Wähle jetzt ein neues Passwort.</p>
 
       <label for="email">E-Mail</label>
       <input id="email" v-model="email" type="email" :disabled="step > 1" />
@@ -81,14 +77,12 @@ function handleSubmit() {
       <template v-if="step === 2">
         <label for="otp">Code</label>
         <input id="otp" v-model="otp" type="text" inputmode="numeric" maxlength="6" />
-      </template>
 
-      <template v-if="step === 3">
         <label for="passwort">Neues Passwort</label>
-        <input id="passwort" v-model="passwort" type="password" />
+        <input id="passwort" v-model="passwort" type="password"/>
 
         <label for="passwortConfirm">Passwort bestätigen</label>
-        <input id="passwortConfirm" v-model="passwortConfirm" type="password" />
+        <input id="passwortConfirm" v-model="passwortConfirm" type="password"/>
       </template>
 
       <p v-if="error" class="error">{{ error }}</p>
@@ -97,8 +91,7 @@ function handleSubmit() {
 
       <button type="submit">
         <template v-if="step === 1">Code senden</template>
-        <template v-if="step === 2">Code prüfen</template>
-        <template v-if="step === 3">Passwort setzen</template>
+        <template v-else>Passwort setzen</template>
       </button>
     </form>
   </main>

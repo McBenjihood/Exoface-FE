@@ -30,13 +30,9 @@ export async function sendResetCode(email: string) {
     }
 }
 
-export async function checkResetCode(email: string, otp: string) {
-    console.log("Code prüfen für", email);
+export async function setNewPassword(email: string, otp: string, passwort: string) {
     if (otp !== "123456") {
         throw new Error("Der Code ist falsch");
     }
-}
-
-export async function setNewPassword(email: string, passwort: string) {
     console.log("Neues Passwort gesetzt für", email, "mit", passwort.length, "Zeichen");
 }
