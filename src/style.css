@@ -1,15 +1,17 @@
 :root {
     --bg: #f4f7f9;
     --surface: #ffffff;
-    --surface-2: #f4f7f9;
+    --surface-2: #eef3f7;
     --border: #dde5ea;
     --border-strong: #b8c4cc;
     --text: #12242e;
     --text-muted: #5a6b77;
-    --primary: #0369a1;
-    --primary-hover: #075985;
+    --primary: #0077aa;
+    --primary-hover: #005f88;
+    --primary-soft: #eaf5fb;
     --on-primary: #ffffff;
     --success: #16a34a;
+    --warn: #b4740b;
     --danger: #dc2626;
     --overlay: rgba(18, 36, 46, 0.4);
 }
@@ -22,10 +24,12 @@
     --border-strong: #3b4a59;
     --text: #e6edf3;
     --text-muted: #94a6b5;
-    --primary: #0ea5e9;
-    --primary-hover: #38bdf8;
+    --primary: #009fe3;
+    --primary-hover: #33b4e9;
+    --primary-soft: #172a3a;
     --on-primary: #06202e;
     --success: #22c55e;
+    --warn: #e0a33e;
     --danger: #f87171;
     --overlay: rgba(0, 0, 0, 0.6);
     color-scheme: dark;
@@ -34,6 +38,11 @@
 body {
     margin: 0;
     background-color: var(--bg);
-    font-family: Arial, sans-serif;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     color: var(--text);
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
