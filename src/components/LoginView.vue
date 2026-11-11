@@ -119,4 +119,27 @@ button:hover {
   font-size: 13px;
   color: #dc2626;
 }
+
+.login {
+  min-height: 100dvh;
+  color-scheme: light;
+  background-image:
+      linear-gradient(rgba(10, 22, 30, 0.55), rgba(10, 22, 30, 0.55)),
+      url("/background.png");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 340px;
+  padding: 30px 36px 36px;
+  color: #12242e;
+  background-color: #ffffff;
+}
 </style>

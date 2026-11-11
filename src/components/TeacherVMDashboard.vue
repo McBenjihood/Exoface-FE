@@ -96,21 +96,21 @@ function handleStartStop() {
 .back {
   display: flex;
   padding: 4px;
-  color: #12242e;
+  color: var(--text);
   background: none;
   border: none;
   cursor: pointer;
 }
 
 .back:hover {
-  color: #0369a1;
+  color: var(--primary);
 }
 
 .name {
   padding: 3px 10px;
   font-weight: 600;
-  background-color: #ffffff;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -119,11 +119,11 @@ function handleStartStop() {
 }
 
 .status.active {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .status.inactive {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .buttons {
@@ -137,15 +137,15 @@ function handleStartStop() {
   padding: 0 14px;
   font-family: inherit;
   font-size: 14px;
-  color: #12242e;
-  background-color: #ffffff;
-  border: 1px solid #b8c4cc;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .buttons button:hover {
-  background-color: #f4f7f9;
+  background-color: var(--surface-2);
 }
 
 .werte {
@@ -157,14 +157,14 @@ function handleStartStop() {
 .wert {
   flex: 1;
   padding: 14px 16px;
-  background-color: #ffffff;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
 .wert-name {
   font-size: 13px;
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .wert-zahl {
@@ -194,7 +194,7 @@ function handleStartStop() {
 }
 
 .leer {
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 @media (max-width: 600px) {

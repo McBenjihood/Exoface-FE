@@ -322,31 +322,32 @@ h1 {
   padding: 0 14px;
   font-family: inherit;
   font-size: 14px;
-  color: #12242e;
-  background-color: #ffffff;
-  border: 1px solid #b8c4cc;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .btn:hover {
-  background-color: #0369a1;
+  color: var(--on-primary);
+  background-color: var(--primary);
 }
 
 .btn-blau {
-  color: #ffffff;
-  background-color: #0369a1;
-  border-color: #0369a1;
+  color: var(--on-primary);
+  background-color: var(--primary);
+  border-color: var(--primary);
 }
 
 .btn-blau:hover {
-  background-color: #075985;
+  background-color: var(--primary-hover);
 }
 
 .modul {
   margin-bottom: 12px;
-  background-color: #ffffff;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -360,13 +361,13 @@ h1 {
 .modul-code {
   padding: 3px 10px;
   font-weight: 600;
-  background-color: #f4f7f9;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
 .modul-text {
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .modul-button {
@@ -378,7 +379,7 @@ h1 {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
   padding: 16px;
-  border-top: 1px solid #dde5ea;
+  border-top: 1px solid var(--border);
 }
 
 .klasse {
@@ -386,13 +387,13 @@ h1 {
   justify-content: space-between;
   align-items: center;
   padding: 12px 14px;
-  border: 1px solid #dde5ea;
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .klasse:hover {
-  border-color: #0369a1;
+  border-color: var(--primary);
 }
 
 .klasse-name {
@@ -401,17 +402,17 @@ h1 {
 
 .klasse-status {
   font-size: 13px;
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .klasse-status.aktiv {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .leer {
   grid-column: 1 / -1;
   margin: 0;
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .neues-modul {
@@ -419,16 +420,16 @@ h1 {
   padding: 12px;
   font-family: inherit;
   font-size: 14px;
-  color: #5a6b77;
+  color: var(--text-muted);
   background: none;
-  border: 1px dashed #b8c4cc;
+  border: 1px dashed var(--border-strong);
   border-radius: 8px;
   cursor: pointer;
 }
 
 .neues-modul:hover {
-  color: #0369a1;
-  border-color: #0369a1;
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .modal-overlay {
@@ -440,7 +441,7 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(18, 36, 46, 0.4);
+  background-color: var(--overlay);
 }
 
 .modal {
@@ -448,7 +449,7 @@ h1 {
   max-width: 360px;
   margin: 0 16px;
   padding: 20px;
-  background-color: #ffffff;
+  background-color: var(--surface);
   border-radius: 8px;
 }
 
@@ -464,7 +465,9 @@ h1 {
   padding: 0 10px;
   font-family: inherit;
   font-size: 14px;
-  border: 1px solid #b8c4cc;
+  color: var(--text);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   box-sizing: border-box;
 }

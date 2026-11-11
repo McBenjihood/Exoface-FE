@@ -1,11 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { getUser, logout } from "../auth";
+import { theme, toggleTheme } from "../theme";
+import Icon from "./Icon.vue";
 
 const router = useRouter();
 const open = ref(false);
 const user = getUser();
+const dropdown = ref<HTMLElement | null>(null);
+
+const rolle = computed(() =>
+    user?.role === "teacher" ? "Lehrperson" : "Lernende Person",
+);
+
+function schliessen(e: MouseEvent) {
+  if (dropdown.value && !dropdown.value.contains(e.target as Node)) {
+    open.value = false;
+  }
+}
+
+onMounted(() => document.addEventListener("click", schliessen));
+onUnmounted(() => document.removeEventListener("click", schliessen));
 
 function handleLogout() {
   logout();
@@ -18,16 +34,31 @@ function handleLogout() {
       <img src="/logo.png" alt="logo" />
     </router-link>
 
-    <div class="dropdown">
-      <button class="avatar" @click="open = !open">
-        <img src="/avatar.svg" alt="avatar" />
+    <button
+        class="theme-btn"
+        @click="toggleTheme"
+        :title="theme === 'dark' ? 'Hell' : 'Dunkel'"
+    >
+      <Icon :name="theme === 'dark' ? 'sun' : 'moon'" :size="22" />
+    </button>
+
+    <div class="dropdown" ref="dropdown">
+      <button class="avatar" @click="open = !open" title="Profil">
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10 5.5c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5S9.17 7 10 7s1.5.67 1.5 1.5S10.83 10 10 10z" />
+          <path d="M10 2c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.5c-1.49 0-2.86-.51-3.96-1.36C7.19 14.42 8.55 14 10 14s2.81.42 3.96 1.14c-1.1.85-2.47 1.36-3.96 1.36zm5.07-2.44c-1.44-.99-3.19-1.56-5.07-1.56s-3.62.58-5.07 1.56C4.04 12.95 3.5 11.54 3.5 10c0-3.58 2.92-6.5 6.5-6.5s6.5 2.92 6.5 6.5c0 1.54-.54 2.95-1.43 4.06z" />
+        </svg>
       </button>
 
       <div v-if="open" class="menu">
-        <div class="email">{{ user?.email }}</div>
+        <div class="email">
+          <div class="name">{{ user?.name }}</div>
+          <div>{{ rolle }}</div>
+          {{ user?.email }}
+        </div>
 
         <a href="/login" @click.prevent="handleLogout" class="logout"
-          >Abmelden</a
+        >Abmelden</a
         >
       </div>
     </div>
@@ -38,16 +69,19 @@ function handleLogout() {
 .navbar {
   display: flex;
   align-items: center;
-  gap: 35px;
+  gap: 12px;
   padding: 15px 20px;
-  background-color: #f4f7f9;
-  border-bottom: 1px solid #dde5ea;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .logo {
   font-size: 23px;
   font-weight: bold;
-  color: #009fe3;
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -57,24 +91,34 @@ function handleLogout() {
   display: block;
 }
 
-.dropdown {
+.theme-btn {
   margin-left: auto;
-  position: relative;
-}
-
-.avatar {
-  margin-left: auto;
-  height: 35px;
-  width: 35px;
-  padding: 0;
-  border-radius: 50%;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--text);
   background: none;
   border: none;
   cursor: pointer;
 }
 
-.avatar img {
+.dropdown {
+  position: relative;
+}
+
+.avatar {
+  display: block;
+  height: 35px;
+  width: 35px;
+  padding: 0;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.avatar svg {
   height: 100%;
   width: 100%;
   display: block;
@@ -84,31 +128,38 @@ function handleLogout() {
   position: absolute;
   right: 0;
   top: 45px;
-  min-width: 160px;
-  background: white;
-  border: 1px solid #dde5ea;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
 }
 .email {
   padding: 8px 10px 10px;
   font-size: 12px;
-  color: #5a6b77;
-  border-bottom: 1px solid #dde5ea;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
+}
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
 .menu a {
   display: block;
   padding: 8px 10px;
-  color: #333;
+  border-radius: 6px;
+  color: var(--text);
   text-decoration: none;
 }
 
 .menu a.logout {
-  color: red;
+  color: var(--danger);
 }
 
 .menu a:hover {
-  background: #f8f5f5;
+  background: var(--surface-2);
 }
 </style>

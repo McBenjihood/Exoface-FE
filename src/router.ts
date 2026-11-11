@@ -41,12 +41,15 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  if (to.meta.open) return true;
+    const user = getUser();
 
-  const user = getUser();
-  if (!user) return "/login";
+    if (to.meta.open) {
+        if (user) return "/overview";
+        return true;
+    }
 
-  if (to.meta.role && to.meta.role !== user.role) return "/overview";
+    if (!user) return "/login";
+
+    if (to.meta.role && to.meta.role !== user.role) return "/overview";
 });
-
 export default router;

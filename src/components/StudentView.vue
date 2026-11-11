@@ -191,8 +191,8 @@ h1 {
 
 .modul {
   margin-bottom: 12px;
-  background-color: #ffffff;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -208,19 +208,19 @@ h1 {
 .modul-code {
   padding: 3px 10px;
   font-weight: 600;
-  background-color: #f4f7f9;
-  border: 1px solid #dde5ea;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
 .modul-text {
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .pfeil {
   display: flex;
   margin-left: auto;
-  color: #5a6b77;
+  color: var(--text-muted);
   transition: transform 0.15s;
 }
 
@@ -233,7 +233,7 @@ h1 {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-top: 1px solid #dde5ea;
+  border-top: 1px solid var(--border);
 }
 
 .vm {
@@ -241,13 +241,13 @@ h1 {
   justify-content: space-between;
   gap: 16px;
   padding: 14px 16px;
-  border: 1px solid #dde5ea;
+  border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .vm:hover {
-  border-color: #0369a1;
+  border-color: var(--primary);
 }
 
 .vm-info {
@@ -270,15 +270,15 @@ h1 {
 }
 
 .status.active {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .status.inactive {
-  color: #dc2626;
+  color: var(--danger);
 }
 .vm-text {
   font-size: 14px;
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .werte {
@@ -290,7 +290,7 @@ h1 {
 }
 
 .wert-name {
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 .vm-buttons {
@@ -305,20 +305,20 @@ h1 {
   padding: 0 12px;
   font-family: inherit;
   font-size: 14px;
-  color: #12242e;
-  background-color: #ffffff;
-  border: 1px solid #b8c4cc;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   cursor: pointer;
 }
 
 .vm-buttons button:hover {
-  background-color: #f4f7f9;
+  background-color: var(--surface-2);
 }
 
 .leer {
   margin: 0;
-  color: #5a6b77;
+  color: var(--text-muted);
 }
 
 @media (max-width: 600px) {
