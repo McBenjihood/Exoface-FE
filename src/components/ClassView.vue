@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { vms } from "../mockData";
 import { laufendeVms } from "../vmValues";
+import { instanceTypes, templates, ramText, diskText } from "../instanceTypes";
 import VmCard from "./VmCard.vue";
 
 const props = defineProps<{
@@ -72,29 +73,85 @@ function alleStoppen() {
   klassenVms.value.forEach((vm) => (vm.status = "inactive"));
 }
 
+const erstellenDialog = ref<HTMLDialogElement | null>(null);
+const gewaehlterTyp = ref("Small");
+const gewaehltesTemplate = ref("Ubuntu 24.04 LTS");
+const diskGroesse = ref(20);
+const anzahl = ref<Record<number, number>>({});
+
+const typ = computed(() =>
+    instanceTypes.find((t) => t.name === gewaehlterTyp.value),
+);
+
+const totalNeu = computed(() =>
+    classStudents.value.reduce(
+        (summe, s) => summe + (anzahl.value[s.studentID] ?? 0),
+        0,
+    ),
+);
+
+const diskOk = computed(
+    () =>
+        !!typ.value &&
+        diskGroesse.value >= typ.value.diskMin &&
+        diskGroesse.value <= typ.value.diskMax,
+);
+
+function openErstellen() {
+  classStudents.value.forEach((s) => {
+    anzahl.value[s.studentID] = 1;
+  });
+  erstellenDialog.value?.showModal();
+}
+function openFuerSchueler(studentID: number) {
+  classStudents.value.forEach((s) => {
+    anzahl.value[s.studentID] = s.studentID === studentID ? 1 : 0;
+  });
+  erstellenDialog.value?.showModal();
+}
+
+function closeErstellen() {
+  erstellenDialog.value?.close();
+}
+
+function freierName(basis: string) {
+  let name = basis;
+  let nummer = 2;
+  while (vms.some((v) => v.name === name)) {
+    name = basis + "-" + nummer;
+    nummer++;
+  }
+  return name;
+}
+
 function vmsErstellen() {
-  if (!currentModul.value) return;
+  if (!currentModul.value || !typ.value || !diskOk.value) return;
 
   classStudents.value.forEach((student) => {
-    if (getVms(student.studentID).length > 0) return;
-
-    const neueID = Math.max(0, ...vms.map((v) => v.vmID)) + 1;
     const nachname = (student.name.split(" ").pop() ?? "").toLowerCase();
+    const basis = `${props.modulName}-${props.klassenTitle}-${nachname}`.toLowerCase();
 
-    vms.push({
-      vmID: neueID,
-      name: `${props.modulName}-${props.klassenTitle}-${nachname}`.toLowerCase(),
-      studentID: student.studentID,
-      studentName: student.name,
-      moduleID: currentModul.value!.moduleID,
-      ip: `178.162.00.${neueID}:2000`,
-      uptime: "-",
-      cpu: "0 / 100%",
-      ram: "0 GB / 16 GB",
-      storage: "0 GB / 100 GB",
-      status: "inactive",
-    });
+    for (let i = 0; i < (anzahl.value[student.studentID] ?? 0); i++) {
+      const neueID = Math.max(0, ...vms.map((v) => v.vmID)) + 1;
+
+      vms.push({
+        vmID: neueID,
+        name: freierName(basis),
+        studentID: student.studentID,
+        studentName: student.name,
+        moduleID: currentModul.value!.moduleID,
+        ip: `178.162.00.${neueID}:2000`,
+        uptime: "-",
+        cpu: "0 / 100%",
+        ram: `0 GB / ${ramText(typ.value!.ram)}`,
+        storage: `0 GB / ${diskGroesse.value} GB`,
+        status: "inactive",
+        template: gewaehltesTemplate.value,
+      });
+    }
   });
+
+  closeErstellen();
 }
 
 function backtolast() {
@@ -132,7 +189,7 @@ function backtolast() {
     </p>
 
     <div class="aktionen">
-      <button class="btn btn-blau" @click="vmsErstellen">VMs erstellen</button>
+      <button class="btn btn-blau" @click="openErstellen">VMs erstellen</button>
       <button class="btn" @click="alleStarten">Alle starten</button>
       <button class="btn" @click="alleStoppen">Alle stoppen</button>
     </div>
@@ -153,6 +210,12 @@ function backtolast() {
             {{ getVms(student.studentID).length }} laufen
           </template>
         </span>
+        <button
+            class="btn btn-blau btn-klein"
+            @click.prevent="openFuerSchueler(student.studentID)"
+        >
+          VM erstellen
+        </button>
         <svg
             class="pfeil"
             width="18"
@@ -183,6 +246,85 @@ function backtolast() {
     <p v-if="classStudents.length === 0" class="leer">
       In dieser Klasse sind noch keine Schüler.
     </p>
+
+    <dialog ref="erstellenDialog" class="dialog">
+      <h3>VMs erstellen</h3>
+
+      <h4>Grösse</h4>
+      <div class="typen">
+        <label
+            v-for="t in instanceTypes"
+            :key="t.name"
+            class="typ"
+            :class="{ gewaehlt: gewaehlterTyp === t.name }"
+        >
+          <input v-model="gewaehlterTyp" type="radio" :value="t.name" />
+          <span class="typ-name">{{ t.name }}</span>
+          <span class="typ-wert">{{ ramText(t.ram) }} RAM</span>
+          <span class="typ-wert">{{ t.cpu }} {{ t.cpu === 1 ? "Core" : "Cores" }}</span>
+          <span class="typ-wert">bis {{ diskText(t.diskMax) }}</span>
+          <span class="typ-preis">{{ t.preis.toFixed(5) }} / Std.</span>
+        </label>
+      </div>
+
+      <h4>Template und Disk</h4>
+      <div class="felder">
+        <label class="feld">
+          Template
+          <select v-model="gewaehltesTemplate">
+            <option v-for="t in templates" :key="t" :value="t">{{ t }}</option>
+          </select>
+        </label>
+        <label class="feld">
+          Disk in GB
+          <input
+              v-model.number="diskGroesse"
+              type="number"
+              :min="typ?.diskMin"
+              :max="typ?.diskMax"
+          />
+        </label>
+      </div>
+      <p v-if="!diskOk" class="fehler">
+        Die Disk muss zwischen {{ typ?.diskMin }} und {{ typ?.diskMax }} GB sein.
+      </p>
+
+      <h4>Lernende</h4>
+      <div class="lernende">
+        <div
+            v-for="student in classStudents"
+            :key="student.studentID"
+            class="lernende-zeile"
+        >
+          <span class="lernende-name">{{ student.name }}</span>
+          <input
+              v-model.number="anzahl[student.studentID]"
+              type="number"
+              min="0"
+              max="5"
+          />
+        </div>
+      </div>
+
+      <p class="dialog-text">
+        <template v-if="totalNeu === 0">Keine VMs ausgewählt.</template>
+        <template v-else>
+          Es werden {{ totalNeu }} VMs erstellt · ca.
+          {{ ((typ?.preis ?? 0) * totalNeu).toFixed(2) }} pro Stunde
+        </template>
+      </p>
+
+      <div class="dialog-buttons">
+        <button class="btn" @click="closeErstellen">Abbrechen</button>
+        <button
+            class="btn btn-blau"
+            :disabled="totalNeu === 0 || !diskOk"
+            @click="vmsErstellen"
+        >
+          Erstellen
+        </button>
+      </div>
+    </dialog>
   </main>
 </template>
 
@@ -314,30 +456,184 @@ function backtolast() {
   color: var(--text-muted);
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-klein {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  padding: 20px;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.dialog::backdrop {
+  background-color: var(--overlay);
+}
+
+.dialog h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.dialog h4 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dialog-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.typen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.typ {
+  display: grid;
+  grid-template-columns: auto 1fr 100px 70px 90px 100px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.typ:hover {
+  border-color: var(--primary);
+}
+
+.typ.gewaehlt {
+  border-color: var(--primary);
+  background-color: var(--primary-soft);
+}
+
+.typ-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.typ-wert {
+  color: var(--text-muted);
+}
+
+.typ-preis {
+  font-size: 12px;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.felder {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.feld select,
+.feld input,
+.lernende-zeile input {
+  height: 32px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+
+.feld input {
+  width: 90px;
+}
+
+.lernende {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.lernende-zeile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.lernende-name {
+  flex: 1;
+}
+
+
+
+.lernende-zeile input {
+  width: 64px;
+}
+
+.fehler {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 @media (max-width: 600px) {
   .top {
     flex-wrap: wrap;
   }
-}
 
-.schueler[open] .schueler-body {
-  animation: aufklappen 0.25s ease-out;
-}
-
-@keyframes aufklappen {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
+  .typ {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .schueler[open] .schueler-body {
-    animation: none;
+  .typ-name {
+    flex: 1 0 70%;
+  }
+
+  .typ-wert {
+    font-size: 13px;
+  }
+
+  .typ-preis {
+    display: none;
   }
 }
 

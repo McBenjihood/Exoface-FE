@@ -36,7 +36,7 @@ const konsole = computed(() => {
       "[  OK  ] Started OpenSSH server daemon.",
       "[  OK  ] Reached target Multi-User System.",
       "",
-      "Ubuntu 24.04 LTS " + vm.value.name + " tty1",
+      (vm.value.template ?? "Ubuntu 24.04 LTS") + " " + vm.value.name + " tty1",
       "",
       vm.value.name + " login: ",
     ];
@@ -144,7 +144,7 @@ function handleDelete() {
         </tr>
         <tr>
           <th>Betriebssystem</th>
-          <td>Ubuntu 24.04</td>
+          <td>{{ vm.template ?? "Ubuntu 24.04 LTS" }}</td>
         </tr>
         <tr>
           <th>Adresse</th>

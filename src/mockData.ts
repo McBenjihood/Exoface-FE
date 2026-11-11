@@ -11,9 +11,9 @@ export interface Vm {
   cpu: string;
   ram: string;
   storage: string;
-  status: "active" | "inactive";
+    status: "active" | "inactive";
+    template?: string;
 }
-
 // Testdaten, bis das Backend steht. Alle Seiten lesen die VMs von hier,
 // darum sieht man Start/Stop überall gleich.
 export const vms = reactive<Vm[]>([
