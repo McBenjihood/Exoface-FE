@@ -1,26 +1,17 @@
 import type { Vm } from "./mockData";
+import { instanceTypes } from "./instanceTypes";
 
-export function prozent(wert: string) {
-    const teile = wert.replace("%", "").split("/");
-    const belegt = parseFloat(teile[0] ?? "");
-    const total = parseFloat(teile[1] ?? "");
-    if (!total) return 0;
-    return Math.round((belegt / total) * 100);
-}
-
-export function balkenFarbe(wert: number) {
-    if (wert >= 90) return "var(--danger)";
-    if (wert >= 70) return "var(--warn)";
-    return "var(--primary)";
+function maximum(wert: string) {
+    return (wert.split("/")[1] ?? wert).trim();
 }
 
 export function vmWerte(vm: Vm) {
-    const laeuft = vm.status === "active";
+    const typ = instanceTypes.find((t) => t.name === vm.typ);
 
     return [
-        { name: "CPU", text: laeuft ? vm.cpu : "–", prozent: laeuft ? prozent(vm.cpu) : 0 },
-        { name: "RAM", text: laeuft ? vm.ram : "–", prozent: laeuft ? prozent(vm.ram) : 0 },
-        { name: "Disk", text: vm.storage, prozent: prozent(vm.storage) },
+        { name: "CPU", text: typ ? `${typ.cpu} ${typ.cpu === 1 ? "Core" : "Cores"}` : "–" },
+        { name: "RAM", text: maximum(vm.ram) },
+        { name: "Disk", text: maximum(vm.storage) },
     ];
 }
 

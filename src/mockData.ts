@@ -13,6 +13,7 @@ export interface Vm {
   storage: string;
     status: "active" | "inactive";
     template?: string;
+    typ?: string;
 }
 // Testdaten, bis das Backend steht. Alle Seiten lesen die VMs von hier,
 // darum sieht man Start/Stop überall gleich.

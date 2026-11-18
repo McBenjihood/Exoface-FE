@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { vms } from "../mockData";
 import { laufendeVms } from "../vmValues";
@@ -90,12 +90,24 @@ const totalNeu = computed(() =>
     ),
 );
 
-const diskOk = computed(
-    () =>
-        !!typ.value &&
-        diskGroesse.value >= typ.value.diskMin &&
-        diskGroesse.value <= typ.value.diskMax,
+const template = computed(() =>
+    templates.find((t) => t.name === gewaehltesTemplate.value),
 );
+
+const diskMin = computed(() =>
+    Math.max(typ.value?.diskMin ?? 10, template.value?.diskMin ?? 10),
+);
+
+const diskMax = computed(() => typ.value?.diskMax ?? 0);
+
+const diskOk = computed(
+    () => diskGroesse.value >= diskMin.value && diskGroesse.value <= diskMax.value,
+);
+
+watch([diskMin, diskMax], () => {
+  if (diskGroesse.value < diskMin.value) diskGroesse.value = diskMin.value;
+  if (diskGroesse.value > diskMax.value) diskGroesse.value = diskMax.value;
+});
 
 function openErstellen() {
   classStudents.value.forEach((s) => {
@@ -147,6 +159,7 @@ function vmsErstellen() {
         storage: `0 GB / ${diskGroesse.value} GB`,
         status: "inactive",
         template: gewaehltesTemplate.value,
+        typ: gewaehlterTyp.value,
       });
     }
   });
@@ -250,29 +263,23 @@ function backtolast() {
     <dialog ref="erstellenDialog" class="dialog">
       <h3>VMs erstellen</h3>
 
-      <h4>Grösse</h4>
-      <div class="typen">
-        <label
-            v-for="t in instanceTypes"
-            :key="t.name"
-            class="typ"
-            :class="{ gewaehlt: gewaehlterTyp === t.name }"
-        >
-          <input v-model="gewaehlterTyp" type="radio" :value="t.name" />
-          <span class="typ-name">{{ t.name }}</span>
-          <span class="typ-wert">{{ ramText(t.ram) }} RAM</span>
-          <span class="typ-wert">{{ t.cpu }} {{ t.cpu === 1 ? "Core" : "Cores" }}</span>
-          <span class="typ-wert">bis {{ diskText(t.diskMax) }}</span>
-          <span class="typ-preis">{{ t.preis.toFixed(5) }} / Std.</span>
-        </label>
-      </div>
-
-      <h4>Template und Disk</h4>
+      <h4>Grösse und Template</h4>
       <div class="felder">
+        <label class="feld">
+          Grösse
+          <select v-model="gewaehlterTyp">
+            <option v-for="t in instanceTypes" :key="t.name" :value="t.name">
+              {{ t.name }} · {{ ramText(t.ram) }} RAM · {{ t.cpu }}
+              {{ t.cpu === 1 ? "Core" : "Cores" }}
+            </option>
+          </select>
+        </label>
         <label class="feld">
           Template
           <select v-model="gewaehltesTemplate">
-            <option v-for="t in templates" :key="t" :value="t">{{ t }}</option>
+            <option v-for="t in templates" :key="t.name" :value="t.name">
+              {{ t.name }}
+            </option>
           </select>
         </label>
         <label class="feld">
@@ -280,13 +287,17 @@ function backtolast() {
           <input
               v-model.number="diskGroesse"
               type="number"
-              :min="typ?.diskMin"
-              :max="typ?.diskMax"
+              :min="diskMin"
+              :max="diskMax"
           />
         </label>
       </div>
+      <p class="dialog-text">
+        Disk: {{ diskMin }} GB bis {{ diskText(diskMax) }} ·
+        {{ typ?.preis.toFixed(5) }} pro Stunde und VM
+      </p>
       <p v-if="!diskOk" class="fehler">
-        Die Disk muss zwischen {{ typ?.diskMin }} und {{ typ?.diskMax }} GB sein.
+        Die Disk muss zwischen {{ diskMin }} und {{ diskMax }} GB sein.
       </p>
 
       <h4>Lernende</h4>
@@ -500,50 +511,6 @@ function backtolast() {
   color: var(--text-muted);
 }
 
-.typen {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.typ {
-  display: grid;
-  grid-template-columns: auto 1fr 100px 70px 90px 100px;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.typ:hover {
-  border-color: var(--primary);
-}
-
-.typ.gewaehlt {
-  border-color: var(--primary);
-  background-color: var(--primary-soft);
-}
-
-.typ-name {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.typ-wert {
-  color: var(--text-muted);
-}
-
-.typ-preis {
-  font-size: 12px;
-  text-align: right;
-  color: var(--text-muted);
-}
-
 .felder {
   display: flex;
   flex-wrap: wrap;
@@ -594,8 +561,6 @@ function backtolast() {
   flex: 1;
 }
 
-
-
 .lernende-zeile input {
   width: 64px;
 }
@@ -616,24 +581,6 @@ function backtolast() {
 @media (max-width: 600px) {
   .top {
     flex-wrap: wrap;
-  }
-
-  .typ {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-  }
-
-  .typ-name {
-    flex: 1 0 70%;
-  }
-
-  .typ-wert {
-    font-size: 13px;
-  }
-
-  .typ-preis {
-    display: none;
   }
 }
 

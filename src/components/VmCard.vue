@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { vms, type Vm } from "../mockData";
-import { vmWerte, balkenFarbe } from "../vmValues";
+import { vmWerte } from "../vmValues";
 
 const props = defineProps<{
   vm: Vm;
@@ -39,18 +39,8 @@ function deleteVM() {
 
       <div class="werte">
         <div v-for="wert in werte" :key="wert.name" class="wert">
-          <div class="wert-zeile">
-            <span class="wert-name">{{ wert.name }}</span>
-            <span>{{ wert.text }}</span>
-          </div>
-          <div class="balken">
-            <span
-                :style="{
-                width: wert.prozent + '%',
-                backgroundColor: balkenFarbe(wert.prozent),
-              }"
-            ></span>
-          </div>
+          <span class="wert-name">{{ wert.name }}</span>
+          <span>{{ wert.text }}</span>
         </div>
       </div>
     </router-link>
@@ -112,18 +102,9 @@ function deleteVM() {
   font-size: 14px;
   color: var(--text-muted);
 }
-
-.werte {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 12px;
-}
-
-.wert-zeile {
+.wert {
   display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   font-size: 13px;
 }
 
@@ -131,13 +112,6 @@ function deleteVM() {
   color: var(--text-muted);
 }
 
-.balken {
-  height: 6px;
-  margin-top: 6px;
-  overflow: hidden;
-  background-color: var(--surface-2);
-  border-radius: 3px;
-}
 
 .balken span {
   display: block;

@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { getUser } from "../auth";
 import { vms } from "../mockData";
-import { vmWerte, balkenFarbe } from "../vmValues";
+import { vmWerte } from "../vmValues";
 
 const props = defineProps<{
   vmID: string;
@@ -114,14 +114,6 @@ function handleDelete() {
         <div v-for="wert in werte" :key="wert.name" class="wert">
           <div class="wert-name">{{ wert.name }}</div>
           <div class="wert-zahl">{{ wert.text }}</div>
-          <div class="balken">
-            <span
-                :style="{
-                width: wert.prozent + '%',
-                backgroundColor: balkenFarbe(wert.prozent),
-              }"
-            ></span>
-          </div>
         </div>
       </div>
 
@@ -273,14 +265,6 @@ function handleDelete() {
   margin-top: 4px;
   font-size: 18px;
   font-weight: 600;
-}
-
-.balken {
-  height: 6px;
-  margin-top: 10px;
-  overflow: hidden;
-  background-color: var(--surface-2);
-  border-radius: 3px;
 }
 
 .balken span {

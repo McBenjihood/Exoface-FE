@@ -29,9 +29,15 @@ export function diskText(gb: number) {
     if (gb >= 1000) return gb / 1000 + " TB";
     return gb + " GB";
 }
-export const templates = [
-    "Ubuntu 24.04 LTS",
-    "Ubuntu 22.04 LTS",
-    "Debian 12",
-    "Rocky Linux 9",
+export interface Template {
+    name: string;
+    diskMin: number;
+}
+
+export const templates: Template[] = [
+    { name: "Ubuntu 24.04 LTS", diskMin: 10 },
+    { name: "Ubuntu 22.04 LTS", diskMin: 10 },
+    { name: "Debian 12", diskMin: 10 },
+    { name: "Rocky Linux 9", diskMin: 10 },
+    { name: "Windows Server 2022", diskMin: 50 },
 ];
