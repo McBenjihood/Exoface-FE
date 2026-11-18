@@ -78,7 +78,7 @@ const meineVms = computed(() =>
 
 <template>
   <main class="page">
-    <h1>Hallo {{ user?.name }}</h1>
+    <h1>Meine Module</h1>
     <p class="untertitel">
       {{ laufendeVms(meineVms) }} von {{ meineVms.length }} VMs laufen gerade.
     </p>

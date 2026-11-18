@@ -203,7 +203,7 @@ function goToCsvImport() {
   <main class="page">
     <div class="top">
       <h1>
-        Hallo {{ dbData.User.find((u) => u.userId === currentTeacherID)?.name }}
+        Meine Klassen
       </h1>
       <button @click="goToCsvImport" class="btn">CSV importieren</button>
     </div>
