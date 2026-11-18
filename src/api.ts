@@ -1,38 +1,79 @@
-export type Role = "teacher" | "student";
+export type Role = "teacher" | "student" | "admin";
 
 export interface User {
-  role: Role;
-  name: string;
-  email: string;
+    userId: number;
+    role: Role;
+    email: string;
 }
 
-const mockUsers: User[] = [
-  { role: "teacher", name: "Max Muster", email: "max.muster@sluz.ch" },
-  { role: "student", name: "Jan Huppertz", email: "jan.huppertz@sluz.ch" },
-];
+interface JwtPayload {
+    sub: string;
+    email: string;
+    role: Role;
+    exp: number;
+    iss: string;
+}
 
-export async function login(email: string, passwort: string): Promise<User> {
-  const user = mockUsers.find(
-    (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
-  );
-  if (!user || passwort === "") {
-    throw new Error("E-Mail oder Passwort falsch");
-  }
-  return user;
+
+function base64UrlDecode(input: string): string {
+    const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), "=");
+    const bytes = Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+
+export function decodeToken(token: string): JwtPayload {
+    const teil = token.split(".")[1];
+    if (!teil) throw new Error("Ungültiger Token");
+    return JSON.parse(base64UrlDecode(teil)) as JwtPayload;
+}
+
+async function post(pfad: string, body: unknown) {
+    const res = await fetch(`/api${pfad}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+
+    const daten = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(daten.error ?? daten.message ?? "Da ist etwas schiefgelaufen");
+    }
+    return daten;
+}
+
+//auth
+
+export async function login(
+    email: string,
+    passwort: string,
+): Promise<{ user: User; token: string }> {
+    const daten = await post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password: passwort,
+    });
+
+    const token: string = daten.token;
+    const payload = decodeToken(token);
+
+    const user: User = {
+        userId: Number(payload.sub),
+        role: payload.role,
+        email: payload.email,
+    };
+
+    return { user, token };
 }
 
 export async function sendResetCode(email: string) {
-    const user = mockUsers.find(
-        (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
-    );
-    if (!user) {
-        throw new Error("Zu dieser E-Mail gibt es kein Konto");
-    }
+    await post("/auth/init-register", { email: email.trim().toLowerCase() });
 }
 
 export async function setNewPassword(email: string, otp: string, passwort: string) {
-    if (otp !== "123456") {
-        throw new Error("Der Code ist falsch");
-    }
-    console.log("Neues Passwort gesetzt für", email, "mit", passwort.length, "Zeichen");
+    await post("/auth/verify-register", {
+        email: email.trim().toLowerCase(),
+        otp,
+        password: passwort,
+    });
 }
