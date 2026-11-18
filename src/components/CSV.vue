@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import Papa from 'papaparse';
+import {ref} from 'vue';
 
 const router = useRouter();
-
+const message = ref('');
 function handleFileUpload(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
@@ -11,48 +12,54 @@ function handleFileUpload(event: Event) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    complete: (results) => {
-      const klassenMap: { [klassenName: string]: any[] } = {};
-
-      results.data.forEach((row: any) => {
-        const klasse = row.Klasse?.trim();
-        const firstname = row.Vorname?.trim();
-        const surname = row.Name?.trim();
-        const email = row['E-Mail']?.trim();
-
-        if (klasse && (firstname || surname)) {
-          if (!klassenMap[klasse]) {
-            klassenMap[klasse] = [];
-          }
-
-          klassenMap[klasse].push({
-            name: firstname || '',
-            surname: surname || '',
-            email: email || ''
-          });
-        }
-      });
-
-      const alleKlassenData = Object.keys(klassenMap).map(klassenName => ({
-        klasseName: klassenName,
-        students: klassenMap[klassenName]
+    complete: async (results) => {
+      const payload = results.data.map((row: any) => ({
+        name: row.Vorname?.trim() || '',
+        surname: row.Name?.trim() || '',
+        email: row['E-Mail']?.trim() || '',
+        class: row.Klasse?.trim() || '',
+        role: 'student'
       }));
 
-      console.log("Eingelesene Klassen und Schüler:", alleKlassenData);
-
-      router.push({
-        path: '/overview',
-        state: {
-          importedPayload: alleKlassenData
-        }
-      });
+      await sendToBackend(payload);
     },
     error: (err) => {
-      console.error('Fehler beim Einlesen der CSV:', err);
+      console.error(err);
     }
   });
 }
+async function sendToBackend(data: any[]) {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/import/importusers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    const resp = await fetch('http://localhost:3000/api/import/importclasses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
 
+    const result = await response.json();
+
+    if (response.ok) {
+      message.value = 'Erfolgreich';
+      setTimeout(() => router.push('/overview'), 1500);
+    } else {
+      message.value = 'Fehler: ' +  result.error
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
 function cancel() {
   router.push('/overview');
 }

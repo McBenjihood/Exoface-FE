@@ -4,133 +4,74 @@ import { useRouter } from "vue-router";
 import { vms } from "../mockData";
 import { laufendeVms } from "../vmValues";
 
+localStorage.setItem("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleG9mYWNlLmJiendpbmYuY2giLCJpYXQiOjE3OTUwMDc0MjcsImV4cCI6MTc5NTAxMTAyNywic3ViIjoiMiIsImVtYWlsIjoiamFuQG1haWwuY29tIiwicm9sZSI6InRlYWNoZXIifQ.J827G8s0aA59SF_XrguFzXhdZwh9MNon4VznEWfVPf4");
+
+
 const router = useRouter();
-const currentTeacherID = ref(1);
 const activeModul = ref<any>(null);
+const modules = ref<any[]>([]);
+const classes = ref<any[]>([]);
+async function fetchModules() {
+  try {
+    const token = localStorage.getItem("token");
 
-const dbData = ref({
-  User: [
-    {
-      userId: 1,
-      name: "Marc",
-      surname: "Keller",
-      email: "m.keller@schule.ch",
-      role: "lehrer",
-    },
-    {
-      userId: 101,
-      name: "Lukas",
-      surname: "Weber",
-      email: "l.weber@stud.schule.ch",
-      role: "schueler",
-      enabled: true,
-      klassenId: 1,
-    },
-    {
-      userId: 102,
-      name: "Anna",
-      surname: "Fischer",
-      email: "a.fischer@stud.schule.ch",
-      role: "schueler",
-      enabled: true,
-      klassenId: 1,
-    },
-  ],
-  modules: [
-    {
-      moduleID: 1,
-      abbreviation: "M111",
-      description: "Netzwerke und Serverinfrastruktur",
-    },
-    {
-      moduleID: 2,
-      abbreviation: "M183",
-      description: "Applikationssicherheit implementieren",
-    },
-  ],
-  class: [{ classID: 1, name: "D24a" }],
-  ClassModule: [{ moduleID: 1, classID: 1 }],
-  UserModul: [
-    { moduleID: 1, userId: 1 },
-    { moduleID: 2, userId: 1 },
-  ],
-});
-onMounted(() => {
-  const payload = history.state?.importedPayload as
-      | Array<{
-    klasseName: string;
-    students: Array<{ name: string; surname: string; email: string }>;
-  }>
-      | undefined;
-
-  if (payload && Array.isArray(payload)) {
-    payload.forEach((klasseData) => {
-      let existingClass = dbData.value.class.find(
-          (c) => c.name.toLowerCase() === klasseData.klasseName.toLowerCase(),
-      );
-
-      if (!existingClass) {
-        existingClass = {
-          classID: Date.now() + Math.random(),
-          name: klasseData.klasseName,
-        };
-        dbData.value.class.push(existingClass);
+    const response = await fetch("http://localhost:3000/api/module/showmodules", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       }
-
-      klasseData.students.forEach((s, index) => {
-        const userExists = dbData.value.User.some((u) => u.email === s.email);
-
-        if (!userExists) {
-          dbData.value.User.push({
-            userId: Date.now() + index + Math.random(),
-            name: s.name,
-            surname: s.surname,
-            email: s.email,
-            role: "schueler",
-            enabled: true,
-            klassenId: existingClass!.classID,
-          });
-        }
-      });
     });
+    const result = await response.json();
 
-    window.history.replaceState({}, document.title);
+    if (response.ok) {
+      modules.value = result.data.map((m: any) => ({
+        moduleID: m.moduleId,
+        name: m.shortcut,
+        description: m.description,
+        klassen: []
+      }));
+    }
+    console.log(result);
+  } catch (e) {
+    console.error(e);
   }
+}
+
+
+async function fetchClasses() {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("http://localhost:3000/api/class/showclasses", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    const result = await response.json();
+
+    if (response.ok) {
+      classes.value = result.data.map((c: any) => ({
+        classID: c.classId,
+        classname: c.name
+      }));
+    }
+
+
+    console.log(result);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+onMounted(() => {
+  fetchModules();
+  fetchClasses();
+
 });
-const displayModules = computed(() => {
-  const teacherModuleIDs = dbData.value.UserModul.filter(
-      (um) => um.userId === currentTeacherID.value,
-  ).map((um) => um.moduleID);
 
-  return dbData.value.modules
-      .filter((m) => teacherModuleIDs.includes(m.moduleID))
-      .map((m) => {
-        const assignedClassIDs = dbData.value.ClassModule.filter(
-            (cm) => cm.moduleID === m.moduleID,
-        ).map((cm) => cm.classID);
-
-        const klassen = dbData.value.class
-            .filter((c) => assignedClassIDs.includes(c.classID))
-            .map((c) => {
-              const modulVms = vms.filter((v) => v.moduleID === m.moduleID);
-              const laufend = laufendeVms(modulVms);
-
-              return {
-                classID: c.classID,
-                title: c.name,
-                status: `${laufend} von ${modulVms.length} VMs laufen`,
-                active: laufend > 0,
-              };
-            });
-
-        return {
-          moduleID: m.moduleID,
-          name: m.abbreviation,
-          description: m.description,
-          klassen,
-        };
-      });
-});
 
 const modulDialog = ref<HTMLDialogElement | null>(null);
 const klassenDialog = ref<HTMLDialogElement | null>(null);
@@ -146,27 +87,10 @@ function closeModal() {
   modulDialog.value?.close();
 }
 
-function addModul() {
-  if (newModulName.value.trim() !== "") {
-    const newModuleID = Date.now();
-    dbData.value.modules.push({
-      moduleID: newModuleID,
-      abbreviation: newModulName.value.trim(),
-      description: "Neues Modul",
-    });
-    dbData.value.UserModul.push({
-      moduleID: newModuleID,
-      userId: currentTeacherID.value,
-    });
-    closeModal();
-  }
-}
 
 function openClassSelectModal(modul: any) {
   activeModul.value = modul;
-  selectedClassIDs.value = dbData.value.ClassModule.filter(
-      (cm) => cm.moduleID === modul.moduleID,
-  ).map((cm) => cm.classID);
+  selectedClassIDs.value = modul.klassen ? modul.klassen.map((k: any) => k.classID) : [];
 
   klassenDialog.value?.showModal();
 }
@@ -174,22 +98,14 @@ function openClassSelectModal(modul: any) {
 function closeClassSelectModal() {
   klassenDialog.value?.close();
 }
+function addModul()
+{
+
+}
 
 function saveClassSelection() {
-  if (!activeModul.value) return;
 
-  const currentModuleID = activeModul.value.moduleID;
 
-  dbData.value.ClassModule = dbData.value.ClassModule.filter(
-      (cm) => cm.moduleID !== currentModuleID,
-  );
-
-  selectedClassIDs.value.forEach((classID) => {
-    dbData.value.ClassModule.push({
-      moduleID: currentModuleID,
-      classID: classID,
-    });
-  });
 
   closeClassSelectModal();
 }
@@ -203,13 +119,13 @@ function goToCsvImport() {
   <main class="page">
     <div class="top">
       <h1>
-        Hallo {{ dbData.User.find((u) => u.userId === currentTeacherID)?.name }}
+
       </h1>
       <button @click="goToCsvImport" class="btn">CSV importieren</button>
     </div>
 
     <section
-        v-for="modul in displayModules"
+        v-for="modul in modules"
         :key="modul.moduleID"
         class="modul"
     >
@@ -263,9 +179,9 @@ function goToCsvImport() {
     <dialog ref="klassenDialog" class="dialog">
       <h3>Klassen für {{ activeModul?.name }} auswählen</h3>
 
-      <label v-for="c in dbData.class" :key="c.classID" class="checkbox">
+      <label v-for="c in classes" :key="c.classID" class="checkbox">
         <input type="checkbox" :value="c.classID" v-model="selectedClassIDs" />
-        Klasse {{ c.name }}
+        {{ c.classname }}
       </label>
 
       <div class="dialog-buttons">
