@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { sendResetCode, setNewPassword } from "../api";
+import PasswordInput from "./PasswordInput.vue";
 
 const router = useRouter();
 
@@ -79,10 +80,10 @@ function handleSubmit() {
         <input id="otp" v-model="otp" type="text" inputmode="numeric" maxlength="6" />
 
         <label for="passwort">Neues Passwort</label>
-        <input id="passwort" v-model="passwort" type="password"/>
+        <PasswordInput id="passwort" v-model="passwort" autocomplete="new-password" />
 
         <label for="passwortConfirm">Passwort bestätigen</label>
-        <input id="passwortConfirm" v-model="passwortConfirm" type="password"/>
+        <PasswordInput id="passwortConfirm" v-model="passwortConfirm" autocomplete="new-password" />
       </template>
 
       <p v-if="error" class="error">{{ error }}</p>

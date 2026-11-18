@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { login } from "../api";
 import { saveUser } from "../auth";
+import PasswordInput from "./PasswordInput.vue";
 
 const router = useRouter();
 const email = ref("");
@@ -31,7 +32,7 @@ async function handleLogin() {
       <input id="email" v-model="email" type="email" />
 
       <label for="passwort">Passwort</label>
-      <input id="passwort" v-model="passwort" type="password" />
+      <PasswordInput id="passwort" v-model="passwort" autocomplete="current-password" />
 
       <a class="link" href="/resetpassword">
         Erste Anmeldung oder Passwort vergessen?
