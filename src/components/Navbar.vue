@@ -52,14 +52,11 @@ function handleLogout() {
 
       <div v-if="open" class="menu">
         <div class="email">
-          <div class="name">{{ user?.name }}</div>
+          <div class="name">{{ user?.email }}</div>
           <div>{{ rolle }}</div>
-          {{ user?.email }}
         </div>
 
-        <a href="/login" @click.prevent="handleLogout" class="logout"
-        >Abmelden</a
-        >
+        <a href="/login" @click.prevent="handleLogout" class="logout">Abmelden</a>
       </div>
     </div>
   </nav>

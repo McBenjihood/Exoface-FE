@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { login } from "../api";
-import { saveUser } from "../auth";
+import { saveSession } from "../auth";
 import PasswordInput from "./PasswordInput.vue";
 
 const router = useRouter();
@@ -13,8 +13,8 @@ const error = ref("");
 async function handleLogin() {
   error.value = "";
   try {
-    const user = await login(email.value, passwort.value);
-    saveUser(user);
+    const { user, token } = await login(email.value, passwort.value);
+    saveSession(user, token);
     router.push("/overview");
   } catch (e) {
     error.value = (e as Error).message;
