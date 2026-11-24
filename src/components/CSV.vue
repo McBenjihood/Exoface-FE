@@ -39,7 +39,7 @@ async function sendToBackend(data: any[]) {
       },
       body: JSON.stringify(data)
     });
-    const resp = await fetch('http://localhost:3000/api/import/importclasses', {
+    await fetch('http://localhost:3000/api/import/importclasses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

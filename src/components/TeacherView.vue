@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { vms } from "../mockData";
-import { laufendeVms } from "../vmValues";
-
-localStorage.setItem("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJleG9mYWNlLmJiendpbmYuY2giLCJpYXQiOjE3OTUwMDc0MjcsImV4cCI6MTc5NTAxMTAyNywic3ViIjoiMiIsImVtYWlsIjoiamFuQG1haWwuY29tIiwicm9sZSI6InRlYWNoZXIifQ.J827G8s0aA59SF_XrguFzXhdZwh9MNon4VznEWfVPf4");
 
 
 const router = useRouter();
@@ -29,7 +25,12 @@ async function fetchModules() {
         moduleID: m.moduleId,
         name: m.shortcut,
         description: m.description,
-        klassen: []
+        klassen: classes.value.map((c: any) => ({
+          classID: c.classID,
+          title: c.classname,
+          status: "",
+          active: false
+        }))
       }));
     }
     console.log(result);
@@ -53,8 +54,8 @@ async function fetchClasses() {
     const result = await response.json();
 
     if (response.ok) {
-      classes.value = result.data.map((c: any) => ({
-        classID: c.classId,
+      classes.value = result.data.map((c: any, i: number) => ({
+        classID: i + 1,
         classname: c.name
       }));
     }
@@ -66,10 +67,9 @@ async function fetchClasses() {
   }
 }
 
-onMounted(() => {
-  fetchModules();
-  fetchClasses();
-
+onMounted(async () => {
+  await fetchClasses();
+  await fetchModules();
 });
 
 
