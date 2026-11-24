@@ -4,6 +4,7 @@ import ResetPasswordView from "./components/ResetPasswordView.vue";
 import VmView from "./components/VmView.vue";
 import { getUser } from "./auth.ts";
 import OverviewView from "./components/OverviewView.vue";
+import ErrorView from "./components/ErrorView.vue";
 
 const routes = [
   { path: "/", redirect: "/overview" },
@@ -33,6 +34,13 @@ const routes = [
     component: VmView,
     props: true,
   },
+    {
+        path: "/:pfad(.*)*",
+        component:
+        ErrorView,
+        meta: { frei: true
+        },
+    },
 ];
 
 const router = createRouter({
@@ -42,6 +50,8 @@ const router = createRouter({
 
 router.beforeEach((to) => {
     const user = getUser();
+        if (to.meta.frei)
+            return true;
 
     if (to.meta.open) {
         if (user) return "/overview";
