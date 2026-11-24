@@ -98,9 +98,29 @@ function openClassSelectModal(modul: any) {
 function closeClassSelectModal() {
   klassenDialog.value?.close();
 }
-function addModul()
-{
+async function addModul() {
+  const token = localStorage.getItem("token");
 
+  try {
+    const response = await fetch("http://localhost:3000/api/module/addmodule", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        shortcut: newModulName.value,
+        description: ""
+      })
+    });
+
+    if (response.ok) {
+      closeModal();
+      await fetchModules();
+    }
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 function saveClassSelection() {
