@@ -1,3 +1,5 @@
+import { authHeader } from "./auth";
+
 export type Role = "teacher" | "student" | "admin";
 
 export interface User {
@@ -76,4 +78,111 @@ export async function setNewPassword(email: string, otp: string, passwort: strin
         otp,
         password: passwort,
     });
+}
+
+//vms
+
+async function authFetch(pfad: string, init: RequestInit = {}) {
+    const res = await fetch(`/api${pfad}`, {
+        ...init,
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeader(),
+            ...(init.headers ?? {}),
+        },
+    });
+
+    if (res.status === 401) {
+        throw new Error("Deine Sitzung ist abgelaufen. Bitte melde dich neu an.");
+    }
+    if (res.status === 403) {
+        throw new Error("Dafür fehlen dir die Berechtigungen.");
+    }
+
+    const daten = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(daten.error ?? daten.message ?? `Fehler ${res.status}`);
+    }
+    return daten;
+}
+
+export interface ApiInstanceType {
+    id: string;
+    family: string;
+    size: string;
+    cpus: number;
+    memory: number;
+}
+
+export interface ApiTemplate {
+    id: string;
+    name: string;
+    family?: string;
+    description?: string;
+    size?: number;
+}
+
+export interface CreatedVm {
+    uuid: string;
+    name: string;
+    userId: number;
+}
+
+export async function getInstanceTypes(): Promise<ApiInstanceType[]> {
+    const daten = await authFetch("/exoscale/types");
+    return daten.instanceTypes ?? [];
+}
+
+export async function getTemplates(): Promise<ApiTemplate[]> {
+    const daten = await authFetch("/exoscale/templates");
+    return daten.templates ?? [];
+}
+
+export async function createVm(params: {
+    targetUserId: number;
+    name: string;
+    templateId: string;
+    instanceTypeId: string;
+    diskSize?: number;
+}): Promise<CreatedVm> {
+    const daten = await authFetch("/exoscale/create", {
+        method: "POST",
+        body: JSON.stringify(params),
+    });
+    return daten.vm as CreatedVm;
+}
+
+export function bytesZuGb(bytes: number): number {
+    return Math.round(bytes / 1024 ** 3);
+}
+
+export function typLabel(t: ApiInstanceType): string {
+    const gb = t.memory / 1024 ** 3;
+    const ram = gb < 1 ? `${Math.round(gb * 1024)} MB` : `${gb} GB`;
+    return `${t.family} ${t.size} · ${ram} RAM · ${t.cpus} ${t.cpus === 1 ? "Core" : "Cores"}`;
+}
+
+export interface ApiStudent {
+    userId: number | null;
+    name: string;
+    surname: string;
+    email: string;
+    registriert: boolean;
+}
+
+export async function getStudents(klasse: string): Promise<ApiStudent[]> {
+    const daten = await authFetch(`/class/${encodeURIComponent(klasse)}/students`);
+    return daten.data ?? [];
+}
+
+export interface ApiVm {
+    uuid: string;
+    name: string;
+    userId: number;
+}
+
+export async function getVmList(): Promise<ApiVm[]> {
+    const daten = await authFetch("/exoscale/vms");
+    return daten.vms ?? [];
 }

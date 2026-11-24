@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { vms } from "../mockData";
-import { laufendeVms } from "../vmValues";
-import { instanceTypes, templates, ramText, diskText } from "../instanceTypes";
-import VmCard from "./VmCard.vue";
+import {
+  getInstanceTypes, getTemplates, createVm, getStudents, getVmList,
+  bytesZuGb, typLabel,
+  type ApiInstanceType, type ApiTemplate, type ApiVm,
+} from "../api";
 
 const props = defineProps<{
   modulName: string;
@@ -32,11 +33,9 @@ const dbData = ref({
     { classID: 2, name: "D24b" },
   ],
   Students: [
-    { studentID: 1, name: "Schüler 1", classID: 1 },
-    { studentID: 2, name: "Schüler 2", classID: 1 },
-    { studentID: 3, name: "Schüler 3", classID: 1 },
-    { studentID: 4, name: "Max Muster", classID: 1 },
-    { studentID: 104, name: "Jan Huppertz", classID: 1 },
+    { studentID: 1, userId: 1, name: "Jan Huppertz", classID: 1 },
+    { studentID: 2, userId: 3, name: "Benjoman Blümchen", classID: 1 },
+    { studentID: 3, userId: 2, name: "Murat Hamahmi", classID: 1 },
   ],
 });
 
@@ -44,81 +43,112 @@ const currentModul = computed(() =>
     dbData.value.modules.find((m) => m.abbreviation === props.modulName),
 );
 
-const currentClass = computed(() =>
-    dbData.value.class.find((c) => c.name === props.klassenTitle),
-);
-
-const classStudents = computed(() =>
-    dbData.value.Students.filter(
-        (s) => s.classID === currentClass.value?.classID,
-    ),
-);
+const classStudents = ref<{
+  studentID: number;
+  userId: number | null;
+  name: string;
+  registriert: boolean;
+}[]>([]);
 
 function getVms(studentID: number) {
-  return vms.filter(
-      (v) =>
-          v.studentID === studentID && v.moduleID === currentModul.value?.moduleID,
-  );
+  const student = classStudents.value.find((s) => s.studentID === studentID);
+  if (!student || student.userId === null) return [];
+  return serverVms.value.filter((v) => v.userId === student.userId);
 }
 
 const klassenVms = computed(() =>
     classStudents.value.flatMap((s) => getVms(s.studentID)),
 );
 
-function alleStarten() {
-  klassenVms.value.forEach((vm) => (vm.status = "active"));
-}
-
-function alleStoppen() {
-  klassenVms.value.forEach((vm) => (vm.status = "inactive"));
-}
-
 const erstellenDialog = ref<HTMLDialogElement | null>(null);
-const gewaehlterTyp = ref("Small");
-const gewaehltesTemplate = ref("Ubuntu 24.04 LTS");
 const diskGroesse = ref(20);
 const anzahl = ref<Record<number, number>>({});
 
-const typ = computed(() =>
-    instanceTypes.find((t) => t.name === gewaehlterTyp.value),
+const apiTypes = ref<ApiInstanceType[]>([]);
+const apiTemplates = ref<ApiTemplate[]>([]);
+const ladefehler = ref("");
+const laedt = ref(false);
+
+const gewaehlterTypId = ref("");
+const gewaehltesTemplateId = ref("");
+
+const nurFuer = ref<number | null>(null);
+const erstellt = ref(false);
+const fehler = ref("");
+
+const serverVms = ref<ApiVm[]>([]);
+
+onMounted(async () => {
+  laedt.value = true;
+
+  try {
+    const lernende = await getStudents(props.klassenTitle);
+    classStudents.value = lernende.map((s, i) => ({
+      studentID: i + 1,
+      userId: s.userId,
+      name: `${s.name} ${s.surname}`.trim(),
+      registriert: s.registriert,
+    }));
+    serverVms.value = await getVmList();
+  } catch (e) {
+    ladefehler.value = (e as Error).message;
+  }
+
+  try {
+    const [typen, vorlagen] = await Promise.all([getInstanceTypes(), getTemplates()]);
+    apiTypes.value = typen;
+    apiTemplates.value = vorlagen;
+    gewaehlterTypId.value = typen[0]?.id ?? "";
+    gewaehltesTemplateId.value = vorlagen[0]?.id ?? "";
+  } catch (e) {
+    ladefehler.value = (e as Error).message;
+  } finally {
+    laedt.value = false;
+  }
+});
+const zielSchueler = computed(() =>
+    nurFuer.value === null
+        ? classStudents.value
+        : classStudents.value.filter((s) => s.studentID === nurFuer.value),
 );
 
 const totalNeu = computed(() =>
-    classStudents.value.reduce(
+    zielSchueler.value.reduce(
         (summe, s) => summe + (anzahl.value[s.studentID] ?? 0),
         0,
     ),
 );
 
-const template = computed(() =>
-    templates.find((t) => t.name === gewaehltesTemplate.value),
+const gewaehltesTemplate = computed(() =>
+    apiTemplates.value.find((t) => t.id === gewaehltesTemplateId.value),
 );
 
 const diskMin = computed(() =>
-    Math.max(typ.value?.diskMin ?? 10, template.value?.diskMin ?? 10),
+    Math.max(10, gewaehltesTemplate.value?.size ? bytesZuGb(gewaehltesTemplate.value.size) : 10),
 );
 
-const diskMax = computed(() => typ.value?.diskMax ?? 0);
+const diskMax = 500;
 
 const diskOk = computed(
-    () => diskGroesse.value >= diskMin.value && diskGroesse.value <= diskMax.value,
+    () => diskGroesse.value >= diskMin.value && diskGroesse.value <= diskMax,
 );
 
-watch([diskMin, diskMax], () => {
+watch(diskMin, () => {
   if (diskGroesse.value < diskMin.value) diskGroesse.value = diskMin.value;
-  if (diskGroesse.value > diskMax.value) diskGroesse.value = diskMax.value;
 });
 
 function openErstellen() {
+  nurFuer.value = null;
+  fehler.value = "";
   classStudents.value.forEach((s) => {
     anzahl.value[s.studentID] = 1;
   });
   erstellenDialog.value?.showModal();
 }
 function openFuerSchueler(studentID: number) {
-  classStudents.value.forEach((s) => {
-    anzahl.value[s.studentID] = s.studentID === studentID ? 1 : 0;
-  });
+  nurFuer.value = studentID;
+  fehler.value = "";
+  anzahl.value = { [studentID]: 1 };
   erstellenDialog.value?.showModal();
 }
 
@@ -126,45 +156,50 @@ function closeErstellen() {
   erstellenDialog.value?.close();
 }
 
-function freierName(basis: string) {
-  let name = basis;
-  let nummer = 2;
-  while (vms.some((v) => v.name === name)) {
-    name = basis + "-" + nummer;
-    nummer++;
-  }
-  return name;
-}
 
-function vmsErstellen() {
-  if (!currentModul.value || !typ.value || !diskOk.value) return;
+async function vmsErstellen() {
+  if (!gewaehlterTypId.value || !gewaehltesTemplateId.value || !diskOk.value) return;
 
-  classStudents.value.forEach((student) => {
-    const nachname = (student.name.split(" ").pop() ?? "").toLowerCase();
-    const basis = `${props.modulName}-${props.klassenTitle}-${nachname}`.toLowerCase();
+  fehler.value = "";
+  erstellt.value = true;
 
-    for (let i = 0; i < (anzahl.value[student.studentID] ?? 0); i++) {
-      const neueID = Math.max(0, ...vms.map((v) => v.vmID)) + 1;
+  try {
+    for (const student of zielSchueler.value) {
+      if (student.userId === null) continue;
+      const wieviele = anzahl.value[student.studentID] ?? 0;
+      const nachname = (student.name.split(" ").pop() ?? "").toLowerCase();
+      const basis = `${props.modulName}-${props.klassenTitle}-${nachname}`.toLowerCase();
 
-      vms.push({
-        vmID: neueID,
-        name: freierName(basis),
-        studentID: student.studentID,
-        studentName: student.name,
-        moduleID: currentModul.value!.moduleID,
-        ip: `178.162.00.${neueID}:2000`,
-        uptime: "-",
-        cpu: "0 / 100%",
-        ram: `0 GB / ${ramText(typ.value!.ram)}`,
-        storage: `0 GB / ${diskGroesse.value} GB`,
-        status: "inactive",
-        template: gewaehltesTemplate.value,
-        typ: gewaehlterTyp.value,
-      });
+      let nummer = 1;
+
+      for (let i = 0; i < wieviele; i++) {
+        let angelegt = false;
+
+        while (!angelegt) {
+          const name = nummer === 1 ? basis : `${basis}-${nummer}`;
+          try {
+            await createVm({
+              targetUserId: student.userId,
+              name,
+              templateId: gewaehltesTemplateId.value,
+              instanceTypeId: gewaehlterTypId.value,
+              diskSize: diskGroesse.value,
+            });
+            angelegt = true;
+          } catch (e) {
+            if (!(e as Error).message.includes("bereits eine VM")) throw e;
+            if (nummer > 20) throw e;
+          }
+          nummer++;
+        }
+      }
     }
-  });
-
-  closeErstellen();
+    closeErstellen();
+  } catch (e) {
+    fehler.value = (e as Error).message;
+  } finally {
+    erstellt.value = false;
+  }
 }
 
 function backtolast() {
@@ -197,14 +232,11 @@ function backtolast() {
     </div>
 
     <p class="untertitel">
-      {{ classStudents.length }} Lernende ·
-      {{ laufendeVms(klassenVms) }} von {{ klassenVms.length }} VMs laufen
+      {{ classStudents.length }} Lernende - {{ klassenVms.length }} VMs
     </p>
 
     <div class="aktionen">
       <button class="btn btn-blau" @click="openErstellen">VMs erstellen</button>
-      <button class="btn" @click="alleStarten">Alle starten</button>
-      <button class="btn" @click="alleStoppen">Alle stoppen</button>
     </div>
 
     <details
@@ -219,12 +251,13 @@ function backtolast() {
             keine VM
           </template>
           <template v-else>
-            {{ laufendeVms(getVms(student.studentID)) }} von
-            {{ getVms(student.studentID).length }} laufen
+            {{ getVms(student.studentID).length }} VMs
           </template>
         </span>
         <button
             class="btn btn-blau btn-klein"
+            :disabled="!student.registriert"
+            :title="student.registriert ? '' : 'Hat sich noch nicht registriert'"
             @click.prevent="openFuerSchueler(student.studentID)"
         >
           VM erstellen
@@ -243,12 +276,14 @@ function backtolast() {
       </summary>
 
       <div class="schueler-body">
-        <VmCard
+        <div
             v-for="vm in getVms(student.studentID)"
-            :key="vm.vmID"
-            :vm="vm"
-            loeschbar
-        />
+            :key="vm.uuid"
+            class="vm-zeile"
+        >
+          <span class="vm-zeile-name">{{ vm.name }}</span>
+          <span class="vm-zeile-uuid">{{ vm.uuid }}</span>
+        </div>
 
         <p v-if="getVms(student.studentID).length === 0" class="leer">
           Dieser Schüler hat in diesem Modul noch keine VM.
@@ -261,78 +296,98 @@ function backtolast() {
     </p>
 
     <dialog ref="erstellenDialog" class="dialog">
-      <h3>VMs erstellen</h3>
+      <h3 v-if="nurFuer === null">VMs erstellen</h3>
+      <h3 v-else>VM erstellen für {{ zielSchueler[0]?.name }}</h3>
 
-      <h4>Grösse und Template</h4>
-      <div class="felder">
-        <label class="feld">
-          Grösse
-          <select v-model="gewaehlterTyp">
-            <option v-for="t in instanceTypes" :key="t.name" :value="t.name">
-              {{ t.name }} · {{ ramText(t.ram) }} RAM · {{ t.cpu }}
-              {{ t.cpu === 1 ? "Core" : "Cores" }}
-            </option>
-          </select>
-        </label>
-        <label class="feld">
-          Template
-          <select v-model="gewaehltesTemplate">
-            <option v-for="t in templates" :key="t.name" :value="t.name">
-              {{ t.name }}
-            </option>
-          </select>
-        </label>
-        <label class="feld">
-          Disk in GB
-          <input
-              v-model.number="diskGroesse"
-              type="number"
-              :min="diskMin"
-              :max="diskMax"
-          />
-        </label>
-      </div>
-      <p class="dialog-text">
-        Disk: {{ diskMin }} GB bis {{ diskText(diskMax) }} ·
-        {{ typ?.preis.toFixed(5) }} pro Stunde und VM
-      </p>
-      <p v-if="!diskOk" class="fehler">
-        Die Disk muss zwischen {{ diskMin }} und {{ diskMax }} GB sein.
+      <p v-if="ladefehler" class="fehler">{{ ladefehler }}</p>
+      <p v-else-if="laedt" class="dialog-text">Lade Grössen und Templates …</p>
+      <p v-else-if="apiTypes.length === 0" class="fehler">
+        Der Cloud-Provider liefert gerade keine Grössen zurück.
       </p>
 
-      <h4>Lernende</h4>
-      <div class="lernende">
-        <div
-            v-for="student in classStudents"
-            :key="student.studentID"
-            class="lernende-zeile"
-        >
-          <span class="lernende-name">{{ student.name }}</span>
-          <input
-              v-model.number="anzahl[student.studentID]"
-              type="number"
-              min="0"
-              max="5"
-          />
+      <template v-else>
+        <h4>Grösse und Template</h4>
+        <div class="felder">
+          <label class="feld">
+            Grösse
+            <select v-model="gewaehlterTypId">
+              <option v-for="t in apiTypes" :key="t.id" :value="t.id">
+                {{ typLabel(t) }}
+              </option>
+            </select>
+          </label>
+          <label class="feld">
+            Template
+            <select v-model="gewaehltesTemplateId">
+              <option v-for="t in apiTemplates" :key="t.id" :value="t.id">
+                {{ t.name }}
+              </option>
+            </select>
+          </label>
+          <label class="feld">
+            Disk in GB
+            <input
+                v-model.number="diskGroesse"
+                type="number"
+                :min="diskMin"
+                :max="diskMax"
+            />
+          </label>
         </div>
-      </div>
+        <p class="dialog-text">Disk: {{ diskMin }} GB bis {{ diskMax }} GB</p>
+        <p v-if="!diskOk" class="fehler">
+          Die Disk muss zwischen {{ diskMin }} und {{ diskMax }} GB sein.
+        </p>
 
-      <p class="dialog-text">
-        <template v-if="totalNeu === 0">Keine VMs ausgewählt.</template>
-        <template v-else>
-          Es werden {{ totalNeu }} VMs erstellt · ca.
-          {{ ((typ?.preis ?? 0) * totalNeu).toFixed(2) }} pro Stunde
+        <template v-if="nurFuer === null">
+          <h4>Lernende</h4>
+          <div class="lernende">
+            <div
+                v-for="student in classStudents"
+                :key="student.studentID"
+                class="lernende-zeile"
+            >
+              <span class="lernende-name">{{ student.name }}</span>
+              <input
+                  v-model.number="anzahl[student.studentID]"
+                  type="number"
+                  min="0"
+                  max="5"
+              />
+            </div>
+          </div>
         </template>
-      </p>
+
+        <template v-else>
+          <label class="feld">
+            Anzahl VMs
+            <input
+                v-model.number="anzahl[nurFuer]"
+                type="number"
+                min="1"
+                max="5"
+            />
+          </label>
+        </template>
+
+        <p class="dialog-text">
+          <template v-if="totalNeu === 0">Keine VMs ausgewählt.</template>
+          <template v-else>Es werden {{ totalNeu }} VMs erstellt.</template>
+        </p>
+
+        <p v-if="fehler" class="fehler">{{ fehler }}</p>
+      </template>
 
       <div class="dialog-buttons">
-        <button class="btn" @click="closeErstellen">Abbrechen</button>
+        <button class="btn" :disabled="erstellt" @click="closeErstellen">
+          Abbrechen
+        </button>
         <button
             class="btn btn-blau"
-            :disabled="totalNeu === 0 || !diskOk"
+            :disabled="totalNeu === 0 || !diskOk || erstellt || laedt || !!ladefehler || !gewaehlterTypId"
             @click="vmsErstellen"
         >
-          Erstellen
+          {{ erstellt ? "Wird erstellt …" : "Erstellen" }}
         </button>
       </div>
     </dialog>
@@ -604,5 +659,22 @@ function backtolast() {
   .schueler::details-content {
     transition: none;
   }
+}
+
+.vm-zeile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.vm-zeile-uuid {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 </style>
