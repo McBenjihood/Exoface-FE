@@ -83,10 +83,10 @@ function cancel() {
   max-width: 500px;
   margin: 4rem auto;
   padding: 2rem;
-  background: #ffffff;
+  background: var(--surface);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   text-align: center;
   font-family: inherit;
 }
@@ -107,12 +107,12 @@ function cancel() {
 }
 
 .btn-secondary {
-  background-color: #edf2f7;
-  color: #2d3748;
-  border: 1px solid #cbd5e0;
+  background-color: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
 }
 
 .btn-secondary:hover {
-  background-color: #e2e8f0;
+  background-color: var(--primary-soft);
 }
 </style>
