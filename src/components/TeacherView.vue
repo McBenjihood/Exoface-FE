@@ -318,7 +318,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  padding: 10px 12px;
   color: inherit;
   text-decoration: none;
   border: 1px solid var(--border);
