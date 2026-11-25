@@ -112,11 +112,30 @@ const zielSchueler = computed(() =>
         : classStudents.value.filter((s) => s.studentID === nurFuer.value),
 );
 
+const MAX_PRO_PERSON = 5;
+
+function anzahlVon(studentID: number) {
+  return Number(anzahl.value[studentID]) || 0;
+}
+
+function begrenze(wert: unknown) {
+  const zahl = Math.floor(Number(wert));
+  return Number.isFinite(zahl) ? Math.min(MAX_PRO_PERSON, Math.max(0, zahl)) : 0;
+}
+
+function aendereAnzahl(studentID: number, schritt: number) {
+  anzahl.value[studentID] = begrenze(anzahlVon(studentID) + schritt);
+}
+
+function eingabeAnzahl(studentID: number, e: Event) {
+  const feld = e.target as HTMLInputElement;
+  const neu = begrenze(feld.value);
+  anzahl.value[studentID] = neu;
+  feld.value = String(neu);
+}
+
 const totalNeu = computed(() =>
-    zielSchueler.value.reduce(
-        (summe, s) => summe + (anzahl.value[s.studentID] ?? 0),
-        0,
-    ),
+    zielSchueler.value.reduce((summe, s) => summe + anzahlVon(s.studentID), 0),
 );
 
 const gewaehltesTemplate = computed(() =>
@@ -222,17 +241,14 @@ function backtolast() {
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
-      <span class="klasse-code">{{ klassenTitle }}</span>
-      <span class="modul-text">
-        {{ modulName
-        }}<template v-if="currentModul">
-          - {{ currentModul.description }}</template
-      >
+      <span class="klasse-code">{{ modulName }} / {{ klassenTitle }}</span>
+      <span class="modul-text" v-if="currentModul">
+        {{ currentModul.description }}
       </span>
     </div>
 
     <p class="untertitel">
-      {{ classStudents.length }} Lernende - {{ klassenVms.length }} VMs
+      {{ classStudents.length }} Lernende
     </p>
 
     <div class="aktionen">
@@ -306,9 +322,8 @@ function backtolast() {
       </p>
 
       <template v-else>
-        <h4>Grösse und Template</h4>
         <div class="felder">
-          <label class="feld">
+          <label class="feld feld-breit">
             Grösse
             <select v-model="gewaehlterTypId">
               <option v-for="t in apiTypes" :key="t.id" :value="t.id">
@@ -334,13 +349,13 @@ function backtolast() {
             />
           </label>
         </div>
-        <p class="dialog-text">Disk: {{ diskMin }} GB bis {{ diskMax }} GB</p>
         <p v-if="!diskOk" class="fehler">
           Die Disk muss zwischen {{ diskMin }} und {{ diskMax }} GB sein.
         </p>
 
         <template v-if="nurFuer === null">
-          <h4>Lernende</h4>
+          <hr class="trenner" />
+
           <div class="lernende">
             <div
                 v-for="student in classStudents"
@@ -348,37 +363,76 @@ function backtolast() {
                 class="lernende-zeile"
             >
               <span class="lernende-name">{{ student.name }}</span>
-              <input
-                  v-model.number="anzahl[student.studentID]"
-                  type="number"
-                  min="0"
-                  max="5"
-              />
+
+              <span class="anzahl-feld">
+                <button
+                    class="schritt"
+                    type="button"
+                    :disabled="anzahlVon(student.studentID) === 0"
+                    @click="aendereAnzahl(student.studentID, -1)"
+                >
+                  −
+                </button>
+                <input
+                    type="number"
+                    min="0"
+                    :max="MAX_PRO_PERSON"
+                    :value="anzahlVon(student.studentID)"
+                    @input="eingabeAnzahl(student.studentID, $event)"
+                />
+                <button
+                    class="schritt"
+                    type="button"
+                    :disabled="anzahlVon(student.studentID) >= MAX_PRO_PERSON"
+                    @click="aendereAnzahl(student.studentID, 1)"
+                >
+                  +
+                </button>
+              </span>
+            </div>
+
+            <div class="lernende-total">
+              <span>Total</span>
+              <span class="total-zahl">{{ totalNeu }}</span>
             </div>
           </div>
         </template>
 
         <template v-else>
-          <label class="feld">
-            Anzahl VMs
-            <input
-                v-model.number="anzahl[nurFuer]"
-                type="number"
-                min="1"
-                max="5"
-            />
-          </label>
+          <div class="einzel">
+            <span>Anzahl VMs</span>
+            <span class="anzahl-feld">
+              <button
+                  class="schritt"
+                  type="button"
+                  :disabled="anzahlVon(nurFuer) === 0"
+                  @click="aendereAnzahl(nurFuer, -1)"
+              >
+                −
+              </button>
+              <input
+                  type="number"
+                  min="0"
+                  :max="MAX_PRO_PERSON"
+                  :value="anzahlVon(nurFuer)"
+                  @input="eingabeAnzahl(nurFuer, $event)"
+              />
+              <button
+                  class="schritt"
+                  type="button"
+                  :disabled="anzahlVon(nurFuer) >= MAX_PRO_PERSON"
+                  @click="aendereAnzahl(nurFuer, 1)"
+              >
+                +
+              </button>
+            </span>
+          </div>
         </template>
-
-        <p class="dialog-text">
-          <template v-if="totalNeu === 0">Keine VMs ausgewählt.</template>
-          <template v-else>Es werden {{ totalNeu }} VMs erstellt.</template>
-        </p>
 
         <p v-if="fehler" class="fehler">{{ fehler }}</p>
       </template>
 
-      <div class="dialog-buttons">
+      <div class="dialog-fuss">
         <button class="btn" :disabled="erstellt" @click="closeErstellen">
           Abbrechen
         </button>
@@ -423,9 +477,7 @@ function backtolast() {
 .klasse-code {
   padding: 3px 10px;
   font-weight: 600;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+
 }
 
 .modul-text {
@@ -535,8 +587,9 @@ function backtolast() {
 
 .dialog {
   width: 100%;
-  max-width: 560px;
+  max-width: 480px;
   max-height: 90vh;
+  overflow-y: auto;
   padding: 20px;
   color: var(--text);
   background-color: var(--surface);
@@ -554,12 +607,6 @@ function backtolast() {
   font-size: 18px;
 }
 
-.dialog h4 {
-  margin: 16px 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
 .dialog-text {
   margin: 0 0 12px;
   font-size: 14px;
@@ -567,23 +614,41 @@ function backtolast() {
 }
 
 .felder {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 12px;
 }
 
-.feld {
+.feld-breit {
+  grid-column: 1 / -1;
+}
+
+.trenner {
+  margin: 20px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.lernende-total {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
   font-size: 13px;
   color: var(--text-muted);
 }
 
+.total-zahl {
+  width: 84px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .feld select,
-.feld input,
-.lernende-zeile input {
+.feld input {
   height: 32px;
   padding: 0 8px;
   font-family: inherit;
@@ -594,30 +659,96 @@ function backtolast() {
   border-radius: 6px;
 }
 
+.feld select,
 .feld input {
-  width: 90px;
+  width: 100%;
 }
 
 .lernende {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  margin-top: 14px;
 }
 
 .lernende-zeile {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding: 7px 0;
   font-size: 14px;
 }
 
-.lernende-name {
-  flex: 1;
+.lernende-zeile + .lernende-zeile {
+  border-top: 1px solid var(--border);
 }
 
-.lernende-zeile input {
-  width: 64px;
+.lernende-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anzahl-feld {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.anzahl-feld input {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text);
+  background: none;
+  border: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.anzahl-feld input::-webkit-outer-spin-button,
+.anzahl-feld input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.schritt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.schritt:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-2);
+}
+
+.schritt:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.einzel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 14px;
 }
 
 .fehler {
@@ -626,11 +757,12 @@ function backtolast() {
   color: var(--danger);
 }
 
-.dialog-buttons {
+.dialog-fuss {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 @media (max-width: 600px) {
